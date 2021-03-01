@@ -63,9 +63,10 @@ ax.text(walk_x[-1], walk_y[-1], "end", fontdict={"c":"red"})
 ax.scatter(walk_x, walk_y, marker="None", c="b")
 ax.plot(walk_x, walk_y, "black", alpha=0.4)
 
-ax.add_patch(plt.Circle((n/2, n/2), math.floor(scaled*n/2), color='r', fill=False))
+ax.add_patch(plt.Circle((n/2, n/2), math.floor(scaled*n/2), color='r', fill=False, alpha=0.25))
 
 plt.title("Uniform Selective-Stopping (threshold=%1.2f)" %threshold)
+plt.figtext(0.5, 0.01, "Agent performs selective-stopping with uniformly random probability in a Gaussian medium and terminates at concentration ≥ %1.2f." %threshold, wrap=True, horizontalalignment="center", fontsize=10)
 plt.xticks([])
 plt.yticks([])
 plt.show()
