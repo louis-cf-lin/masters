@@ -45,7 +45,7 @@ z0 = [0.05, 0.05, 0.05, 0.05, 0.05]
 
 dt = 0.01
 t_start = 0
-t_end = 2.5e4
+t_end = 2.5e5
 
 solver = ode(sys)
 solver.set_integrator('dop853')
@@ -67,6 +67,7 @@ while k < len(t):
     temp = k/len(t) * 100
     print('%i %%' % temp)
     print(pos)
+    print(solver.y[3])
   
   if random.random() < p_tumble(solver.y[3]):
     alpha = random.uniform(0, 2*math.pi)
@@ -79,7 +80,7 @@ while k < len(t):
   pos[0] += dx
   pos[1] += dy
 
-  if pos[0] < 0 or pos[1] < 0 or pos[0] > 100 or pos[1] > 100:
+  if pos[0] < -100 or pos[1] < -100 or pos[0] > 100 or pos[1] > 100:
     pos[0] -= dx
     pos[1] -= dy
   else:
