@@ -20,13 +20,13 @@ t = np.arange(t_start, t_end, dt)
 
 pos = [0, 0]
 elements = ['E', 'M', 'MC', 'C', 'W']
-y = [0.05, 0.05, 0.05, 0.05, 0.05]
+z0 = [0.05, 0.05, 0.05, 0.05, 0.05]
 
 # === Outputs ===
 # sol = np.empty((len(t), len(elements)))
 # sol[0] = z0
 sol_C = np.empty(len(t))
-sol_C[0] = y[3]
+sol_C[0] = z0[3]
 
 # === Plotting ===
 fig1, ax1 = plt.subplots()
@@ -35,14 +35,14 @@ cmap = plt.get_cmap('jet')
 colors = cmap(np.linspace(0, 1.0, len(t)))
 ax1.set_xlim([-100, 100])
 ax1.set_ylim([-100, 100])
-ax1.scatter(pos[0], pos[1], color=colors[0], marker="o")
-ax1.text(pos[0], pos[1], "start", fontdict={"c":colors[0]})
 
 # === Initialise ===
-# solver = ode(min_model.ode_sys)
-# solver.set_integrator('rk45') # dop853
-# solver.set_f_params(kf, kb, k_degC, k_degW, pos)
-# solver.set_initial_value(z0, t_start)
+solver = ode(min_model.ode_sys)
+solver.set_integrator('rk45') # dop853
+solver.set_f_params(kf, kb, k_degC, k_degW, pos)
+solver.set_initial_value(z0, t_start)
+ax1.scatter(pos[0], pos[1], color=colors[0], marker="o")
+ax1.text(pos[0], pos[1], "start", fontdict={"c":colors[0]})
 
 # fig1.show()
 # fig1.canvas.draw()
@@ -54,11 +54,11 @@ while k < len(t):
   if k % t_end == 0:
     temp = k/len(t) * 100
     print('%i %%' % temp)
-    print(y[3])
+    print(solver.y[3])
     ax1.scatter(pos[0], pos[1], color=colors[k], marker="o")
     # fig1.canvas.draw()
 
-  if random.random() < min_model.p_tumble(y[3]):
+  if random.random() < min_model.p_tumble(solver.y[3]):
     # tumble
     alpha = random.uniform(0, 2*math.pi)
     dx = 0
@@ -77,8 +77,10 @@ while k < len(t):
     pos[1] -= dy
     alpha = random.uniform(0, 2*math.pi)
   else:
-    y = min_model.euler(y, dt, kf, kb, k_degC, k_degW, pos)
-    sol_C[k] = y[3]
+    solver.set_f_params(kf, kb, k_degC, k_degW, pos)
+    solver.integrate(t[k])
+    # sol[k] = solver.y
+    sol_C[k] = solver.y[3]
     k += 1
 
 print(pos)
