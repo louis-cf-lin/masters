@@ -24,9 +24,8 @@ def k_d(pos, element):
   elif (element == 'F' or element == 'N'):
     return kd * np.exp(-(pos[0]**2 + pos[1]**2) / 2000)
 
-# System of ODE's
-def ode_sys(t, z, kf, kb, pos):
-  E, M, C, V, W, H, F, N, S = z
+def euler(y0, h, kf, kb, pos):
+  E, M, C, V, W, H, F, N, S = y0
   k_f = [kf[0]*E*M*C, kf[1]*C*H, kf[2]*C*H*V**2/2, kf[3]*C*V**2/2, kf[4]*C*W**2/2, kf[5]*H, kf[6]*S, kf[7]*C*F*N*S]
   k_b = [kb[0]*C**2*V**2/4, kb[1]*H*W, kb[2]*C*H**2*W**2/4, None, None, None, None, kb[7]*C**2*V**2*S**2/6]
   f = [
@@ -40,7 +39,7 @@ def ode_sys(t, z, kf, kb, pos):
     -k_f[7] + k_b[7] + k_d(pos, 'N'), # N
     -k_f[6] - k_f[7] + k_b[7] - 2*k_b[7] + 2*k_f[7] + k_d(pos, 'S') # S
   ]
-  return f
+  return y0 + np.multiply(f, h)
 
 # === C O N S T A N T S ===
 
@@ -49,38 +48,33 @@ kf = [0.61, 0.006, 0.37, 0.006, 0.006, 0.02, 0.0001, 0.99]
 kb = [4.7e-63, 0.006, 1.5e-41, None, None, None, None, 9.6e-67]
 kd = 0.04
 
-dt = 1
+dt = 0.01
 t_start = 0
-t_end = 50000
-t = np.arange(t_end)
+t_end = 500
+t = np.arange(t_start, t_end, dt)
 
 fig1, ax1 = plt.subplots()
-fig2, ax2 = plt.subplots()
-cmap = plt.get_cmap('jet')
-colors = cmap(np.linspace(0, 1.0, len(t)))
 
 for i in range(10):
   for j in range(10):
 
-    print(i)
-    print(j)
+    print(i, j, sep='')
+
+    if i == 8 and j == 1:
+      print('stop right there')
 
     # === I N I T ===
 
     pos = [i*40 - 180, j*40 - 180]
     alpha = random.uniform(0, 2*math.pi)
-    z0 = [0., 0., 0.5, 0., 0., 1., 0., 0., 0.]
+    solution = [0., 0., 0.5, 0., 0., 1., 0., 0., 0.]
 
     # sol = np.empty((len(t), len(elements)))
     # sol[0] = z0
     # sol_C = np.empty(len(t))
     # sol_C[0] = z0[2]
 
-    solver = ode(ode_sys)
-    solver.set_integrator('rk45') # dop853
-    solver.set_f_params(kf, kb, pos)
-    solver.set_initial_value(z0, t_start)
-    k = 1
+    k = 0
 
     # === R U N ===
 
@@ -92,7 +86,7 @@ for i in range(10):
       #   print(solver.y[2])
       #   ax1.scatter(pos[0], pos[1], color=colors[k], marker="o")
 
-      if random.random() < p_tumble(solver.y[2], solver.y[4]):
+      if random.random() < p_tumble(solution[2], solution[4]):
         # tumble
         alpha = random.uniform(0, 2*math.pi)
         dx = 0
@@ -111,10 +105,7 @@ for i in range(10):
         pos[1] -= dy
         alpha = random.uniform(0, 2*math.pi)
       else:
-        solver.set_f_params(kf, kb, pos)
-        solver.integrate(t[k])
-        # sol[k] = solver.y
-        # sol_C[k] = solver.y[2]
+        solution = euler(solution, dt, kf, kb, pos)
         k += 1
 
     ax1.scatter(pos[0], pos[1])
@@ -125,8 +116,4 @@ for i in range(10):
 ax1.set_title("A bacterium's trajectory")
 ax1.set_xlim([-200, 200])
 ax1.set_ylim([-200, 200])
-# ax2.plot(t, sol_C)
-# ax2.set_title("Bacterium's [C] concentration over time")
-# ax2.set_xlabel("time")
-# ax2.set_ylabel("[C] concentration")
 plt.show()
