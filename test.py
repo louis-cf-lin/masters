@@ -1,93 +1,28 @@
-from scipy.integrate import ode
-import matplotlib.pyplot as plt
 import numpy as np
-import min_model
-import random
-import math
+import matplotlib.pyplot as plt
 
-random.seed(814486220)
+def k_d(pos, element):
+  kd = 1
+  if element == 'M' or element == 'E':
+    left = kd * np.exp(-((pos[0]-75)**2 + pos[1]**2) / 2000)
+    right = kd * np.exp(-((pos[0]+75)**2 + pos[1]**2) / 2000)
+    return left + right
+  elif (element == 'S'):
+    if np.sqrt((pos[0] + 75)**2 + (pos[1])**2) < 0.5:
+      return 1
+    else:
+      return 0
+  elif (element == 'F' or element == 'N'):
+    return kd * np.exp(-(pos[0]**2 + pos[1]**2) / 2000)
 
-kf = [0.0183156, 0.606531, 0.0183156, 0.606531, 0.9905]
-kb = [0.367879, 0, 0.367879, 0, 0]
-k_degC = 0.0183156
-k_degW = 0.0497871
-alpha = random.uniform(0, 2*math.pi)
+sigma_x = 1.
+sigma_y = 1.
 
-dt = 0.01
-t_start = 0
-t_end = 1e4
-t = np.arange(t_start, t_end, dt)
+x = 55
+y = 0
 
-pos = [0, 0]
-elements = ['E', 'M', 'MC', 'C', 'W']
-y = [0.05, 0.05, 0.05, 0.05, 0.05]
+print(k_d([45,0], 'M'))
 
-# === Outputs ===
-# sol = np.empty((len(t), len(elements)))
-# sol[0] = z0
-sol_C = np.empty(len(t))
-sol_C[0] = y[3]
+# pos = [-75,0]
 
-# === Plotting ===
-fig1, ax1 = plt.subplots()
-fig2, ax2 = plt.subplots()
-cmap = plt.get_cmap('jet')
-colors = cmap(np.linspace(0, 1.0, len(t)))
-ax1.set_xlim([-100, 100])
-ax1.set_ylim([-100, 100])
-ax1.scatter(pos[0], pos[1], color=colors[0], marker="o")
-ax1.text(pos[0], pos[1], "start", fontdict={"c":colors[0]})
-
-# === Initialise ===
-# solver = ode(min_model.ode_sys)
-# solver.set_integrator('rk45') # dop853
-# solver.set_f_params(kf, kb, k_degC, k_degW, pos)
-# solver.set_initial_value(z0, t_start)
-
-# fig1.show()
-# fig1.canvas.draw()
-
-k = 1
-
-while k < len(t):
-
-  if k % t_end == 0:
-    temp = k/len(t) * 100
-    print('%i %%' % temp)
-    print(y[3])
-    ax1.scatter(pos[0], pos[1], color=colors[k], marker="o")
-    # fig1.canvas.draw()
-
-  if random.random() < min_model.p_tumble(y[3]):
-    # tumble
-    alpha = random.uniform(0, 2*math.pi)
-    dx = 0
-    dy = 0
-  else:
-    # run
-    dx = 0.05 * math.cos(alpha)
-    dy = 0.05 * math.sin(alpha)
-
-  pos[0] += dx
-  pos[1] += dy
-
-  if pos[0] < -100 or pos[1] < -100 or pos[0] > 100 or pos[1] > 100:
-    # reverse and tumble
-    pos[0] -= dx
-    pos[1] -= dy
-    alpha = random.uniform(0, 2*math.pi)
-  else:
-    y = min_model.euler(y, dt, kf, kb, k_degC, k_degW, pos)
-    sol_C[k] = y[3]
-    k += 1
-
-print(pos)
-
-ax1.scatter(pos[0], pos[1], color=colors[-1], marker="o")
-ax1.text(pos[0], pos[1], "end", fontdict={"c":colors[-1]})
-ax1.set_title("A bacterium's trajectory")
-ax2.plot(t, sol_C)
-ax2.set_title("Bacterium's [C] concentration over time")
-ax2.set_xlabel("time")
-ax2.set_ylabel("[C] concentration")
-plt.show()
+# print(np.sqrt((pos[0] + 75)**2 + (pos[1])**2))

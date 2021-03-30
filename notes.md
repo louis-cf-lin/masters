@@ -26,3 +26,8 @@ No
 
 Associative learning chemical networks (McGregor) - summarise it
 
+
+
+- Assuming dt = 1?
+- Assuming initial values are all 0 except for c=0.5 and h=1?
+- Gaussian distribution mu=0, sigma=1?
