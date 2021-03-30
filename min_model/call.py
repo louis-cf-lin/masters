@@ -1,7 +1,7 @@
 from scipy.integrate import ode
 import matplotlib.pyplot as plt
 import numpy as np
-import min_model
+import min_model_fun
 import random
 import math
 
