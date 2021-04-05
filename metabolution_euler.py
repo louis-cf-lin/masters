@@ -13,8 +13,8 @@ def p_tumble(C, W):
 # Rate of transport of chemicals from environment into bacteria
 def k_d(pos, element):
   if element == 'M' or element == 'E':
-    left = kd * np.exp(-((pos[0]-75)**2 + pos[1]**2) / 2000)
-    right = kd * np.exp(-((pos[0]+75)**2 + pos[1]**2) / 2000)
+    left = kd * np.exp(-((pos[0] + 75)**2 + pos[1]**2) / 2000)
+    right = kd * np.exp(-((pos[0] - 75)**2 + pos[1]**2) / 2000)
     return left + right
   elif (element == 'S'):
     if np.sqrt((pos[0] + 75)**2 + (pos[1])**2) < 0.5:
@@ -24,6 +24,7 @@ def k_d(pos, element):
   elif (element == 'F' or element == 'N'):
     return kd * np.exp(-(pos[0]**2 + pos[1]**2) / 2000)
 
+# System of ODE's
 def euler(y0, h, kf, kb, pos):
   E, M, C, V, W, H, F, N, S = y0
   k_f = [kf[0]*E*M*C, kf[1]*C*H, kf[2]*C*H*V**2/2, kf[3]*C*V**2/2, kf[4]*C*W**2/2, kf[5]*H, kf[6]*S, kf[7]*C*F*N*S]
@@ -48,9 +49,9 @@ kf = [0.61, 0.006, 0.37, 0.006, 0.006, 0.02, 0.0001, 0.99]
 kb = [4.7e-63, 0.006, 1.5e-41, None, None, None, None, 9.6e-67]
 kd = 0.04
 
-dt = 0.01
+dt = 1
 t_start = 0
-t_end = 500
+t_end = 50000
 t = np.arange(t_start, t_end, dt)
 
 fig1, ax1 = plt.subplots()
@@ -60,31 +61,17 @@ for i in range(10):
 
     print(i, j, sep='')
 
-    if i == 8 and j == 1:
-      print('stop right there')
-
     # === I N I T ===
 
     pos = [i*40 - 180, j*40 - 180]
     alpha = random.uniform(0, 2*math.pi)
     solution = [0., 0., 0.5, 0., 0., 1., 0., 0., 0.]
 
-    # sol = np.empty((len(t), len(elements)))
-    # sol[0] = z0
-    # sol_C = np.empty(len(t))
-    # sol_C[0] = z0[2]
-
     k = 0
 
     # === R U N ===
 
     while k < len(t):
-
-      # if k % t_end == 0:
-      #   temp = k/len(t) * 100
-      #   print('%i %%' % temp)
-      #   print(solver.y[2])
-      #   ax1.scatter(pos[0], pos[1], color=colors[k], marker="o")
 
       if random.random() < p_tumble(solution[2], solution[4]):
         # tumble
@@ -108,12 +95,12 @@ for i in range(10):
         solution = euler(solution, dt, kf, kb, pos)
         k += 1
 
-    ax1.scatter(pos[0], pos[1])
+    if solution[-1] > 0:
+      ax1.scatter(pos[0], pos[1], color="green", marker="o")
+    else:
+      ax1.scatter(pos[0], pos[1], color="red", marker="x")
 
-# ax1.scatter(pos[0], pos[1], color=colors[-1], marker="o")
-# ax1.text(pos[0], pos[1], "end", fontdict={"c":colors[-1]})
-
-ax1.set_title("A bacterium's trajectory")
+ax1.set_title("Final positions")
 ax1.set_xlim([-200, 200])
 ax1.set_ylim([-200, 200])
 plt.show()

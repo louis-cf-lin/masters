@@ -13,8 +13,8 @@ def p_tumble(C, W):
 # Rate of transport of chemicals from environment into bacteria
 def k_d(pos, element):
   if element == 'M' or element == 'E':
-    left = kd * np.exp(-((pos[0]-75)**2 + pos[1]**2) / 2000)
-    right = kd * np.exp(-((pos[0]+75)**2 + pos[1]**2) / 2000)
+    left = kd * np.exp(-((pos[0] + 75)**2 + pos[1]**2) / 2000)
+    right = kd * np.exp(-((pos[0] - 75)**2 + pos[1]**2) / 2000)
     return left + right
   elif (element == 'S'):
     if np.sqrt((pos[0] + 75)**2 + (pos[1])**2) < 0.5:
@@ -49,32 +49,23 @@ kf = [0.61, 0.006, 0.37, 0.006, 0.006, 0.02, 0.0001, 0.99]
 kb = [4.7e-63, 0.006, 1.5e-41, None, None, None, None, 9.6e-67]
 kd = 0.04
 
-dt = 1
+dt = 0.01
 t_start = 0
-t_end = 50000
-t = np.arange(t_end)
+t_end = 500
+t = np.arange(t_start, t_end, dt)
 
 fig1, ax1 = plt.subplots()
-fig2, ax2 = plt.subplots()
-cmap = plt.get_cmap('jet')
-colors = cmap(np.linspace(0, 1.0, len(t)))
 
 for i in range(10):
   for j in range(10):
 
-    print(i)
-    print(j)
+    print(i, j, sep='')
 
     # === I N I T ===
 
     pos = [i*40 - 180, j*40 - 180]
     alpha = random.uniform(0, 2*math.pi)
     z0 = [0., 0., 0.5, 0., 0., 1., 0., 0., 0.]
-
-    # sol = np.empty((len(t), len(elements)))
-    # sol[0] = z0
-    # sol_C = np.empty(len(t))
-    # sol_C[0] = z0[2]
 
     solver = ode(ode_sys)
     solver.set_integrator('rk45') # dop853
@@ -85,12 +76,6 @@ for i in range(10):
     # === R U N ===
 
     while k < len(t):
-
-      # if k % t_end == 0:
-      #   temp = k/len(t) * 100
-      #   print('%i %%' % temp)
-      #   print(solver.y[2])
-      #   ax1.scatter(pos[0], pos[1], color=colors[k], marker="o")
 
       if random.random() < p_tumble(solver.y[2], solver.y[4]):
         # tumble
@@ -113,20 +98,14 @@ for i in range(10):
       else:
         solver.set_f_params(kf, kb, pos)
         solver.integrate(t[k])
-        # sol[k] = solver.y
-        # sol_C[k] = solver.y[2]
         k += 1
 
-    ax1.scatter(pos[0], pos[1])
-
-# ax1.scatter(pos[0], pos[1], color=colors[-1], marker="o")
-# ax1.text(pos[0], pos[1], "end", fontdict={"c":colors[-1]})
+    if solver.y[-1] > 0:
+      ax1.scatter(pos[0], pos[1], color="green", marker="o")
+    else:
+      ax1.scatter(pos[0], pos[1], color="red", marker="x")
 
 ax1.set_title("A bacterium's trajectory")
 ax1.set_xlim([-200, 200])
 ax1.set_ylim([-200, 200])
-# ax2.plot(t, sol_C)
-# ax2.set_title("Bacterium's [C] concentration over time")
-# ax2.set_xlabel("time")
-# ax2.set_ylabel("[C] concentration")
 plt.show()

@@ -28,3 +28,13 @@ Associative learning chemical networks (McGregor) - summarise it
 
 - Assuming dt = 0.01?
 - Assuming initial values are all 0 except for c=0.5 and h=1?
+
+
+Autocatalytic reactions could be a form of memory where, once a bacteria is exposed to an element, it allows the autocatalytic reaction to occur
+But this isn't scalable - you'd need an element for every unique combination of reactants
+
+What sort of ODE's would allow a bacterium to escape a local optimum?
+  - Random chance of performing antichemotaxis
+  - Bacterium leaves behind "waste" products that are toxic
+  - Local resources deplete
+  - Prey and predator model
