@@ -9,7 +9,7 @@ import math
 # Probability of tumbling
 def p_tumble(C, W):
   # return 0.001 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
-  return 0.01 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
+  return 0.001 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
 
 # Rate of transport of chemicals from environment into bacteria
 def k_d(pos):
@@ -39,7 +39,7 @@ kd = 0.04
 
 dt = 0.01
 t_start = 0
-t_end = 5000
+t_end = 500
 t = np.arange(t_start, t_end, dt)
 
 cmap = plt.get_cmap('jet')
@@ -51,24 +51,22 @@ fig1, ax1 = plt.subplots()
 pos = [-100, -100]
 alpha = random.uniform(0, 2*math.pi)
 solution = [0., 0., 0.5, 0., 0., 1.]
-sol_C = np.empty(len(t))
-sol_W = np.empty(len(t))
+sol = np.zeros(shape=(len(solution), len(t)))
+sol[:, 0] = solution
+x_pos = np.empty(len(t))
+x_pos[0] = pos[0]
+y_pos = np.empty(len(t))
+y_pos[0] = pos[1]
 prob = np.empty(len(t))
-dist = np.empty(len(t))
-sol_C[0] = 0.5
-sol_W[0] = 0.
 prob[0] = p_tumble(solution[2], solution[4])
+dist = np.empty(len(t))
 dist[0] = np.sqrt(pos[0]**2 + pos[1]**2)
 
-ax1.scatter(pos[0], pos[1], color=colors[0], marker="o")
 k = 1
 
 # === R U N ===
 
 while k < len(t):
-
-  if k % (len(t)/200) == 0:
-    ax1.scatter(pos[0], pos[1], color=colors[k], marker="o")
 
   tumble = p_tumble(solution[2], solution[4])
   if random.random() < tumble:
@@ -76,6 +74,7 @@ while k < len(t):
     alpha = random.uniform(0, 2*math.pi)
     dx = 0
     dy = 0
+    ax1.scatter(pos[0], pos[1], marker='o')
   else:
     # run
     dx = 0.05 * math.cos(alpha)
@@ -91,25 +90,32 @@ while k < len(t):
     alpha = random.uniform(0, 2*math.pi)
   else:
     solution = euler(solution, dt, kf, kb, pos)
-    sol_C[k] = solution[2]
-    sol_W[k] = solution[4]
+    sol[:, k] = solution
+    x_pos[k] = pos[0]
+    y_pos[k] = pos[1]
     prob[k] = tumble
     dist[k] = np.sqrt(pos[0]**2 + pos[1]**2)
 
     k += 1
 
-ax1.set_title("Final positions")
+# ax1.plot(x_pos, y_pos, '-')
+
+ax1.set_title("Single Bacterium's Tumbling Points")
 ax1.set_xlim([-200, 200])
 ax1.set_ylim([-200, 200])
 plt.show()
 
-fig2, ax2 = plt.subplots()
-ax2.plot(t, sol_C, label='C')
-ax2.plot(t, sol_W, label='W')
-ax2.plot(t, prob*100, label='prob')
-ax2.plot(t, dist/-100, label='dist', alpha=0.25)
-ax2.set_xlabel("iteration")
-ax2.legend()
-fig2.text(.5, .05, 'Probability is multiplied by 100. Distance is divided by 100 and flipped.', ha='center')
+# fig2, ax2 = plt.subplots()
+# ax2.plot(t, sol[0,:], label='E')
+# ax2.plot(t, sol[1,:], label='M')
+# ax2.plot(t, sol[2,:], label='C')
+# ax2.plot(t, sol[3,:], label='V')
+# ax2.plot(t, sol[4,:], label='W')
+# ax2.plot(t, sol[5,:], label='H')
+# ax2.plot(t, prob*100, label='prob')
+# ax2.plot(t, dist/-100, label='dist', alpha=0.25)
+# ax2.set_xlabel("iteration")
+# ax2.legend()
+# fig2.text(.5, .05, 'Probability is multiplied by 100. Distance is divided by 100 and flipped.', ha='center')
 # ax2.set_ylabel("[C] concentration")
-plt.show()
+# plt.show()
