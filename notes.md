@@ -45,3 +45,20 @@ What sort of ODE's would allow a bacterium to escape a local optimum?
   - Local resources deplete
   - Prey and predator model
 2. Assuming initial values are all 0 except for c=0.5 and h=1?
+
+
+Feel free to play around with the numbers
+ - No squaring in tumble prob
+ - Adjusting the 0.001
+ - Plot it and show again
+
+Chapter 1: Reproducing min model/metabolution
+Chapter 2: Ways of extending it or more complex behaviours that can emerge/evolve (lit review?)
+Chapter 3: Mcgregors Paper
+Chapter 4: Evolving a system and then putting it in a body vs evolving and embodied system and seeing how it compares
+
+- Fully understand mcGregor paper
+
+- Watch zoom link from matthew
+
+- "Embodied associated learning"
