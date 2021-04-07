@@ -68,7 +68,7 @@ for i in range(10):
     z0 = [0., 0., 0.5, 0., 0., 1., 0., 0., 0.]
 
     solver = ode(ode_sys)
-    solver.set_integrator('rk45') # dop853
+    solver.set_integrator('dopri5') # dop853
     solver.set_f_params(kf, kb, pos)
     solver.set_initial_value(z0, t_start)
     k = 1

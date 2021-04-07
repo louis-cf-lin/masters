@@ -1,30 +1,36 @@
 # Questions
 
+## 24 March 2021
+
 1. All variables initialised at 0.05
 
-Correct
+ Correct
 
 2. 2.5 million iterations but Figure 6 shows it as mid way
 
-Just a typo
+ Just a typo
 
 3. Is C concentration correct? (page 6 says typically range between 0 and 2 but peaks at 10)
 
-That's fine
+ That's fine
 
 4. The probability of tumbling is too low to remain at areas of high M and E; even when visiting highly desirable areas, bacteria doesn't stay there at all
 
+ Distribution - cannot tell from an individual bacterium's path
 
+5. Do concentrations (variables in square brackets) need to be normalised or something?
 
-5. Earlier calls taking a long time because of RK8, now changed to RK4
+ No
 
-
-6. Do concentrations (variables in square brackets) need to be normalised or something?
-
-No
-
+ ### Tasks
 
 Associative learning chemical networks (McGregor) - summarise it
+
+## 31 March 2021
+
+1. Assuming dt = 0.01?
+
+ 
 
 - Assuming dt = 0.01?
 - Assuming initial values are all 0 except for c=0.5 and h=1?
@@ -38,3 +44,4 @@ What sort of ODE's would allow a bacterium to escape a local optimum?
   - Bacterium leaves behind "waste" products that are toxic
   - Local resources deplete
   - Prey and predator model
+2. Assuming initial values are all 0 except for c=0.5 and h=1?

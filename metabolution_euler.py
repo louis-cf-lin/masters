@@ -93,6 +93,7 @@ for i in range(10):
         alpha = random.uniform(0, 2*math.pi)
       else:
         solution = euler(solution, dt, kf, kb, pos)
+        sol_C[k] = solution[2]
         k += 1
 
     if solution[-1] > 0:
