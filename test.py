@@ -30,6 +30,13 @@ def euler(y0, h, kf, kb, pos):
   ]
   return y0 + np.multiply(f, h)
 
+# === H Y P E R P A R A M E T E R S ===
+
+plot_tumbling_points = True
+plot_single_trajectory = True
+plot_chems = True
+plot_all = True
+
 # === C O N S T A N T S ===
 
 random.seed(0)
@@ -44,9 +51,12 @@ t = np.arange(t_start, t_end, dt)
 
 cmap = plt.get_cmap('jet')
 colors = cmap(np.linspace(0, 1.0, len(t)))
-fig1, ax1 = plt.subplots()
+
+if plot_tumbling_points:
+  fig1, ax1 = plt.subplots()
 
 # === I N I T ===
+
 
 pos = [-100, -100]
 alpha = random.uniform(0, 2*math.pi)
@@ -74,7 +84,8 @@ while k < len(t):
     alpha = random.uniform(0, 2*math.pi)
     dx = 0
     dy = 0
-    ax1.scatter(pos[0], pos[1], marker='o')
+    if plot_tumbling_points:
+      ax1.scatter(pos[0], pos[1], marker='o')
   else:
     # run
     dx = 0.05 * math.cos(alpha)
@@ -98,24 +109,45 @@ while k < len(t):
 
     k += 1
 
-# ax1.plot(x_pos, y_pos, '-')
 
-ax1.set_title("Single Bacterium's Tumbling Points")
-ax1.set_xlim([-200, 200])
-ax1.set_ylim([-200, 200])
-plt.show()
+if plot_tumbling_points:
+  ax1.set_title("Single Bacterium Tumbling Points")
+  ax1.set_xlim([-200, 200])
+  ax1.set_ylim([-200, 200])
+  plt.show()
 
-# fig2, ax2 = plt.subplots()
-# ax2.plot(t, sol[0,:], label='E')
-# ax2.plot(t, sol[1,:], label='M')
-# ax2.plot(t, sol[2,:], label='C')
-# ax2.plot(t, sol[3,:], label='V')
-# ax2.plot(t, sol[4,:], label='W')
-# ax2.plot(t, sol[5,:], label='H')
-# ax2.plot(t, prob*100, label='prob')
-# ax2.plot(t, dist/-100, label='dist', alpha=0.25)
-# ax2.set_xlabel("iteration")
-# ax2.legend()
-# fig2.text(.5, .05, 'Probability is multiplied by 100. Distance is divided by 100 and flipped.', ha='center')
-# ax2.set_ylabel("[C] concentration")
-# plt.show()
+if plot_single_trajectory:
+  fig2, ax2 = plt.subplots()
+  ax2.set_title("Single Bacterium Trajectory")
+  ax2.set_xlim([-200, 200])
+  ax2.set_ylim([-200, 200])
+  ax2.plot(x_pos, y_pos, '-')
+  plt.show()
+
+if plot_chems:
+  fig3, ax3 = plt.subplots()
+  iteration = t/dt
+  ax3.plot(iteration, sol[0,:], label='E')
+  ax3.plot(iteration, sol[1,:], label='M')
+  ax3.plot(iteration, sol[2,:], label='C')
+  ax3.plot(iteration, sol[3,:], label='V')
+  ax3.plot(iteration, sol[4,:], label='W')
+  ax3.plot(iteration, sol[5,:], label='H')
+  ax3.set_xlabel("iteration")
+  ax3.legend()
+  plt.show()
+
+if plot_all:
+  fig4, ax4 = plt.subplots()
+  iteration = t/dt
+  ax4.plot(iteration, sol[2,:], label='C')
+  ax4.plot(iteration, sol[4,:], label='W')
+  ax4.plot(iteration, prob*100, label='prob')
+  ax4.plot(iteration, dist/-100, label='dist', alpha=0.25)
+  fig4.text(.5, 0.01, 'Probability is multiplied by 100. Distance is divided by 100 and flipped.', ha='center')
+  fig4.subplots_adjust(bottom=0.2)
+  ax4.set_xlabel("iteration")
+  ax4.legend()
+  plt.show()
+
+

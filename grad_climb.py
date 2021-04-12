@@ -36,10 +36,9 @@ kf = [0.61, 0.006, 0.37, 0.006, 0.006, 0.02]
 kb = [4.7e-63, 0.006, 1.5e-41, None, None, None]
 kd = 0.04
 
-dt = 1
+dt = 0.01
 t_start = 0
-# t_end = 50000
-t_end = 25000
+t_end = 500
 t = np.arange(t_start, t_end, dt)
 
 fig1, ax1 = plt.subplots()
