@@ -8,7 +8,7 @@ import math
 
 # Probability of tumbling
 def p_tumble(C, W):
-  return 0.01 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
+  return 0.005 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
 
 # Rate of transport of chemicals from environment into bacteria
 def k_d(pos):
@@ -31,8 +31,8 @@ def euler(y0, h, kf, kb, pos):
 
 # === H Y P E R P A R A M E T E R S ===
 
-plot_tumbling_points = False
-plot_single_trajectory = True
+plot_tumbling_points = True
+plot_single_trajectory = False
 plot_chems = False
 plot_all = False
 
@@ -45,7 +45,7 @@ kd = 0.04
 
 dt = 0.01
 t_start = 0
-t_end = 500
+t_end = 1000
 t = np.arange(t_start, t_end, dt)
 
 cmap = plt.get_cmap('jet')
@@ -55,7 +55,6 @@ if plot_tumbling_points:
   fig1, ax1 = plt.subplots()
 
 # === I N I T ===
-
 
 pos = [-100, -100]
 alpha = random.uniform(0, 2*math.pi)
@@ -84,7 +83,7 @@ while k < len(t):
     dx = 0
     dy = 0
     if plot_tumbling_points:
-      ax1.scatter(pos[0], pos[1], marker='o')
+      ax1.scatter(pos[0], pos[1], marker='o', color='blue', alpha=0.25)
   else:
     # run
     dx = 0.05 * math.cos(alpha)
@@ -105,7 +104,6 @@ while k < len(t):
     y_pos[k] = pos[1]
     prob[k] = tumble
     dist[k] = np.sqrt(pos[0]**2 + pos[1]**2)
-
     k += 1
 
 
