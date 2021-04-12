@@ -8,8 +8,7 @@ import math
 
 # Probability of tumbling
 def p_tumble(C, W):
-  # return 0.001 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
-  return 0.001 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
+  return 0.01 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
 
 # Rate of transport of chemicals from environment into bacteria
 def k_d(pos):
@@ -32,10 +31,10 @@ def euler(y0, h, kf, kb, pos):
 
 # === H Y P E R P A R A M E T E R S ===
 
-plot_tumbling_points = True
+plot_tumbling_points = False
 plot_single_trajectory = True
-plot_chems = True
-plot_all = True
+plot_chems = False
+plot_all = False
 
 # === C O N S T A N T S ===
 
@@ -46,7 +45,7 @@ kd = 0.04
 
 dt = 0.01
 t_start = 0
-t_end = 500
+t_end = 650
 t = np.arange(t_start, t_end, dt)
 
 cmap = plt.get_cmap('jet')
