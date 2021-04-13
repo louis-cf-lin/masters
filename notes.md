@@ -62,3 +62,6 @@ Correct
 - Fully understand McGregor paper and summarise
 - Watch Zoom link from Matthew
 - Fix gradient-climbing
+
+## 14 Apil 2021
+

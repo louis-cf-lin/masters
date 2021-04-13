@@ -42,12 +42,172 @@ def euler(y0, h, kf, kb, pos):
   ]
   return y0 + np.multiply(f, h)
 
+# Single bacterium run
+def single_run(init_pos):
+  pos = init_pos
+  alpha = random.uniform(0, 2*math.pi)
+  solution = [0., 0., 0.5, 0., 0., 1., 0., 0., 0.]
+  sol = np.zeros(shape=(len(solution), len(t)))
+  sol[:, 0] = solution
+  x_pos = np.empty(len(t))
+  x_pos[0] = pos[0]
+  y_pos = np.empty(len(t))
+  y_pos[0] = pos[1]
+  prob = np.empty(len(t))
+  prob[0] = p_tumble(solution[2], solution[4])
+
+  if plot_tumbling_points:
+    fig1, ax1 = plt.subplots()
+    tumble_x = []
+    tumble_y = []
+    tumble_prob = []
+
+  k = 1
+
+  # === R U N ===
+
+  while k < len(t):
+
+    tumble = p_tumble(solution[2], solution[4])
+    if random.random() < tumble:
+      # tumble
+      alpha = random.uniform(0, 2*math.pi)
+      dx = 0
+      dy = 0
+      if plot_tumbling_points:
+        tumble_x.append(pos[0])
+        tumble_y.append(pos[1])
+        tumble_prob.append(tumble)
+    else:
+      # run
+      dx = 0.05 * math.cos(alpha)
+      dy = 0.05 * math.sin(alpha)
+
+    pos[0] += dx
+    pos[1] += dy
+
+    if pos[0] < -100 or pos[1] < -100 or pos[0] > 100 or pos[1] > 100:
+      # reverse and tumble
+      pos[0] -= dx
+      pos[1] -= dy
+      alpha = random.uniform(0, 2*math.pi)
+    else:
+      solution = euler(solution, dt, kf, kb, pos)
+      sol[:, k] = solution
+      x_pos[k] = pos[0]
+      y_pos[k] = pos[1]
+      prob[k] = tumble
+      k += 1
+
+  if plot_tumbling_points:
+    sc = ax1.scatter(tumble_x, tumble_y, marker='o', c=tumble_prob, cmap='plasma', edgecolor='none')
+    ax1.set_title("Single Bacterium Tumbling Points")
+    ax1.set_xlim([-100, 100])
+    ax1.set_ylim([-100, 100])
+    fig1.colorbar(sc)
+
+  if plot_single_trajectory:
+    _, ax2 = plt.subplots()
+    ax2.set_title("Single Bacterium Trajectory")
+    ax2.set_xlim([-100, 100])
+    ax2.set_ylim([-100, 100])
+    ax2.add_patch(plt.Circle((-75, 0), 0.5, color='red', fill=False))
+    ax2.scatter(x_pos, y_pos, s=0.1, marker='.', c=np.linspace(1,10,len(t)), cmap='jet')
+
+  if plot_chems:
+    _, ax3 = plt.subplots()
+    iteration = t/dt
+    ax3.plot(iteration, sol[0,:], label='E / M')
+    ax3.plot(iteration, sol[2,:], label='C')
+    ax3.plot(iteration, sol[3,:], label='V')
+    ax3.plot(iteration, sol[4,:], label='W')
+    # ax3.plot(iteration, sol[5,:], label='H')
+    ax3.plot(iteration, sol[6,:], label='F / N')
+    ax3.plot(iteration, sol[8,:], label='S')
+    ax3.set_xlabel("iteration")
+    ax3.legend()
+
+  if plot_all:
+    fig4, ax4 = plt.subplots()
+    iteration = t/dt
+    ax4.plot(iteration, sol[2,:], label='C')
+    ax4.plot(iteration, sol[4,:], label='W')
+    ax4.plot(iteration, prob*100, label='prob')
+    ax4.plot(iteration, ( np.sqrt( (x_pos+75)**2 + (y_pos)**2 ) )/-100, label='dist from (-75,0)')
+    ax4.plot(iteration, ( np.sqrt( (x_pos-75)**2 + (y_pos)**2 ) )/-100, label='dist from (+75,0)')
+    ax4.plot(iteration, ( np.sqrt( (x_pos)**2 + (y_pos)**2 ) )/-100, label='dist from (0,0)')
+    fig4.text(.5, 0.01, 'Probability is multiplied by 100.', ha='center')
+    fig4.subplots_adjust(bottom=0.2)
+    ax4.set_xlabel("iteration")
+    ax4.legend()
+  
+  print(sol[-1,-1])
+  plt.show()
+
+# Population run
+
+def pop_run():
+  if plot_population:
+    _, ax5 = plt.subplots()
+
+  for i in range(10):
+    for j in range(10):
+      print(i, j, sep='')
+      # === I N I T ===
+      pos = [i*20 - 90, j*20 - 90]
+      alpha = random.uniform(0, 2*math.pi)
+      solution = [0., 0., 0.5, 0., 0., 1., 0., 0., 0.]
+      k = 1
+      # === R U N ===
+      while k < len(t):
+        tumble = p_tumble(solution[2], solution[4])
+
+        if random.random() < tumble:
+          # tumble
+          alpha = random.uniform(0, 2*math.pi)
+          dx = 0
+          dy = 0
+        else:
+          # run
+          dx = 0.05 * math.cos(alpha)
+          dy = 0.05 * math.sin(alpha)
+
+        pos[0] += dx
+        pos[1] += dy
+
+        if pos[0] < -100 or pos[1] < -100 or pos[0] > 100 or pos[1] > 100:
+          # reverse and tumble
+          pos[0] -= dx
+          pos[1] -= dy
+          alpha = random.uniform(0, 2*math.pi)
+        else:
+          solution = euler(solution, dt, kf, kb, pos)
+          k += 1
+
+      if plot_population:
+        if solution[-1] > 0:
+          print('got one!')
+          ax5.scatter(pos[0], pos[1], marker='o', color='blue', alpha=0.25)
+        else:
+          ax5.scatter(pos[0], pos[1], marker='x', color='red', alpha=0.25)
+
+  if plot_population:
+    # ax5.set_title("Single Bacterium Tumbling Points")
+    ax5.set_xlim([-100, 100])
+    ax5.set_ylim([-100, 100])
+  
+  plt.show()
+
+
 # === H Y P E R P A R A M E T E R S ===
 
 plot_tumbling_points = True
 plot_single_trajectory = True
 plot_chems = True
 plot_all = True
+plot_population = True
+
+single = True
 
 # === C O N S T A N T S ===
 
@@ -58,110 +218,15 @@ kd = 0.04
 
 dt = 0.01
 t_start = 0
-t_end = 500
+t_end = 900
 t = np.arange(t_start, t_end, dt)
 
 cmap = plt.get_cmap('jet')
 colors = cmap(np.linspace(0, 1.0, len(t)))
 
-if plot_tumbling_points:
-  fig1, ax1 = plt.subplots()
+# === S I N G L E ===
 
-
-# === P O P U L A T I O N ===
-
-
-# === I N I T ===
-
-pos = [-100, -100]
-alpha = random.uniform(0, 2*math.pi)
-solution = [0., 0., 0.5, 0., 0., 1., 0., 0., 0.]
-sol = np.zeros(shape=(len(solution), len(t)))
-sol[:, 0] = solution
-x_pos = np.empty(len(t))
-x_pos[0] = pos[0]
-y_pos = np.empty(len(t))
-y_pos[0] = pos[1]
-prob = np.empty(len(t))
-prob[0] = p_tumble(solution[2], solution[4])
-
-k = 1
-
-# === R U N ===
-
-while k < len(t):
-
-  tumble = p_tumble(solution[2], solution[4])
-  if random.random() < tumble:
-    # tumble
-    alpha = random.uniform(0, 2*math.pi)
-    dx = 0
-    dy = 0
-    if plot_tumbling_points:
-      ax1.scatter(pos[0], pos[1], marker='o', color='blue', alpha=0.25)
-  else:
-    # run
-    dx = 0.05 * math.cos(alpha)
-    dy = 0.05 * math.sin(alpha)
-
-  pos[0] += dx
-  pos[1] += dy
-
-  if pos[0] < -100 or pos[1] < -100 or pos[0] > 100 or pos[1] > 100:
-    # reverse and tumble
-    pos[0] -= dx
-    pos[1] -= dy
-    alpha = random.uniform(0, 2*math.pi)
-  else:
-    solution = euler(solution, dt, kf, kb, pos)
-    sol[:, k] = solution
-    x_pos[k] = pos[0]
-    y_pos[k] = pos[1]
-    prob[k] = tumble
-    k += 1
-    if solution[-1] > 0:
-      print('got S')
-
-if plot_tumbling_points:
-  ax1.set_title("Single Bacterium Tumbling Points")
-  ax1.set_xlim([-100, 100])
-  ax1.set_ylim([-100, 100])
-  plt.show()
-
-if plot_single_trajectory:
-  fig2, ax2 = plt.subplots()
-  ax2.set_title("Single Bacterium Trajectory")
-  ax2.set_xlim([-100, 100])
-  ax2.set_ylim([-100, 100])
-  ax2.add_patch(plt.Circle((-75, 0), 0.5, color='red', fill=False))
-  ax2.plot(x_pos, y_pos, '-')
-  plt.show()
-
-if plot_chems:
-  fig3, ax3 = plt.subplots()
-  iteration = t/dt
-  ax3.plot(iteration, sol[0,:], label='E')
-  ax3.plot(iteration, sol[1,:], label='M')
-  ax3.plot(iteration, sol[2,:], label='C')
-  ax3.plot(iteration, sol[3,:], label='V')
-  ax3.plot(iteration, sol[4,:], label='W')
-  ax3.plot(iteration, sol[5,:], label='H')
-  ax3.plot(iteration, sol[6,:], label='F')
-  ax3.plot(iteration, sol[7,:], label='N')
-  ax3.plot(iteration, sol[8,:], label='S')
-  ax3.set_xlabel("iteration")
-  ax3.legend()
-  plt.show()
-
-if plot_all:
-  fig4, ax4 = plt.subplots()
-  iteration = t/dt
-  ax4.plot(iteration, sol[2,:], label='C')
-  ax4.plot(iteration, sol[4,:], label='W')
-  ax4.plot(iteration, prob*100, label='prob')
-  fig4.text(.5, 0.01, 'Probability is multiplied by 100.', ha='center')
-  fig4.subplots_adjust(bottom=0.2)
-  ax4.set_xlabel("iteration")
-  ax4.legend()
-  plt.show()
-
+if single:
+  single_run([-76, 2])
+else:
+  pop_run()
