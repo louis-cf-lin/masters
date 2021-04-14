@@ -167,7 +167,9 @@ Correct
 > - Stochastic loss of resistance in single cells maintains sufficient level of phage across the ecology to prevent sensitive strains from taking over (single-cells -> ecological dynamics)
 > - The resistance switching mechanism maintains memory of the phage across the ecology (molecular mechanism -> ecological memory)
 
-6
+---
+
+Iteration 6 error
 
 ```
 c:\masters\metabolution.py:11: RuntimeWarning: overflow encountered in double_scalars
@@ -187,7 +189,8 @@ c:\masters\metabolution.py:33: RuntimeWarning: invalid value encountered in doub
   # H
   # S
 ```
-14
+
+Iteration 14 error
 
 ```
 c:\masters\metabolution.py:39: RuntimeWarning: invalid value encountered in double_scalars
@@ -196,4 +199,13 @@ c:\masters\metabolution.py:39: RuntimeWarning: invalid value encountered in doub
   # N
 ```
 
-- What does consitutively ON mean?
+### To do
+
+- Look at supplementary material for McGregor and attempt to implement
+- Contact Yan Kollezhitskiy (via Slack or in-person)
+- Think about:
+  - Associative learning as a module (McGregor)
+  - Chemotaxis as a module (min/metab)
+  - Associative takes inputs S and C and outputs O
+  - O gets fed into chemotaxis module
+- Another idea: associative learning a temperature and moving towards it (kinda thermotaxis)
