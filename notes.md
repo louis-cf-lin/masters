@@ -65,3 +65,135 @@ Correct
 
 ## 14 Apil 2021
 
+### SBS Seminarr: Prof. Edo Kussell
+
+#### Part I - Bacterial adaptation to metabolic fluctuations
+
+> - How do cells respond in a fluctuating environment?
+> - Emerging hypothesis: gene expression levels may be tuned not only for immediate conditions, but also to provide for future generations
+> - This motivates us to perform a cost-benefit analysis of phenotypic memory in fluctuating conditions
+> - When does phenotypic memory provide an advantage for cells that respond to a fluctuating environment?
+
+#### Simplest model of sensing with memory
+
+![Simplest model of sensing with memory](./images/stress-growth.png)
+
+#### Intuitive cost-benefit analysis of memory
+
+![Intuitive cost-benefit analysis of memory](./images/cost-benefit.png)
+
+> - **In a rapidly changing environment, memory provides a selective advantage.** tau indicates mean duration. *b* = benefit. Bottom yellow region is cost of having gene on when not needed.
+
+- When does phenotypic memory provide an advantage for cells that respond to a fluctuating environment?  
+*When environments fluctuate rapidly*
+
+- How much memory should cells use? i.e. is there an optimal value of the degradation rate? How does long-term growth rate vary with increasing protein degradation?
+
+#### In a periodic environment
+
+![Periodic environment](./images/optimal-deg-rate.png)
+
+> - **For a perioidic environment, the optimal response is either memoryless or a constitutive, while an intermediate amount of memory is never optimal**. All rates and times are given in units of generation time. Parameters: *b*=1.0, *c*=0.3, *k_on*=0.5
+
+- Optimal solution is one extreme or the other
+  - For longer environments, rapid degradation is optimal (memoryless)
+  - For shorter environments, constitutively ON is better (long-term memory)
+
+#### In a *randomly changing environment*
+
+![Random environment](./images/optimal-deg-rate-random.png)
+
+> - All rates and times are given in units of generation time. Parameters: *b*=1.0, *c*=0.3, *k_on*=0.5, mean tau_env = 3.5
+
+- For random environments, the optimal strategy is to go for the middle-ground solution: that is, not to suffer the consequences of extreme responses
+
+#### How does the response strategy depend on the environment?
+
+![Response strategy vs environment](./images/optimisation-phase-diagram.png)
+
+> - Each point corresponds to a different type of randomly changing environment
+
+- Even when there are some randomness (albeit very low), the optimal strategy is still one extreme or the other
+- Above a **critical variability**, the strategy is a smooth continuous value for memory
+
+#### Implications
+
+> - Sensing with memory is a survival strategy that is optimal exclusively in random environments
+> - Changes in environmental statistics can drive response network evolution through transitions that can be continuous (e.g. fine-tuning) or discontinuous (e.g. gene gain or loss)
+> - Theory predicts that evolutionary dynamics can be extremely sensitive to environmental timescales
+
+#### Part II - Ecological memory and bacterial defense mechanisms
+
+> 1. How bacteria defend against infection by bacteriophage
+> 2. Phases of bacterial host-pathogen interactions
+> 3. Maintaining costly defenses across variable environments
+
+#### Background
+
+> - Bacteriophages are viruses that infect bacteria
+> - The lambda phage binds receptors on E. coli cells, injects its DNA, produces many new phage, and eventually lyses the bacterium
+
+![lyse](./images/lyse.png)
+
+![phage entering cell](./images/phage-entering-cell.png)
+
+- Phage primarily uses LamB to enter a cell, which grows on maltose and maltotriose
+
+#### How do bacteria adapt in the presence of phage?
+
+![e coli vs phage](./images/ecoli-phage.png)
+
+![e coli vs phage](./images/ecoli-phage-2.png)
+
+![resistance switching](./images/resistance-switching.png)
+
+- Why doesn't malT just completely kill off the phage? Costs and benefits
+
+![switching phases](./images/switching-phases.png)
+
+![cyclical competition](./images/cyclical-comp.png)
+
+- Cyclical competition (e.g. rock-paper-scissors)
+- What are the long-term outcomes?
+
+![localised patches](./images/localised-patches.png)
+
+![game theory](./images/game-theory.png)
+
+
+#### Implications
+
+> - The resistance switching strategy is evolutionarily stable when the switching rate is smaller than the patch clearance rate (environment -> molecular mechanism)
+> - Stochastic loss of resistance in single cells maintains sufficient level of phage across the ecology to prevent sensitive strains from taking over (single-cells -> ecological dynamics)
+> - The resistance switching mechanism maintains memory of the phage across the ecology (molecular mechanism -> ecological memory)
+
+6
+
+```
+c:\masters\metabolution.py:11: RuntimeWarning: overflow encountered in double_scalars
+  return 0.01 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
+c:\masters\metabolution.py:11: RuntimeWarning: invalid value encountered in double_scalars
+  return 0.01 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
+c:\masters\metabolution.py:30: RuntimeWarning: overflow encountered in double_scalars
+  k_f = ...
+c:\masters\metabolution.py:31: RuntimeWarning: overflow encountered in double_scalars
+  k_b = ...
+c:\masters\metabolution.py:33: RuntimeWarning: invalid value encountered in double_scalars
+  # E
+  # M
+  # C
+  # V
+  # W
+  # H
+  # S
+```
+14
+
+```
+c:\masters\metabolution.py:39: RuntimeWarning: invalid value encountered in double_scalars
+  # F
+c:\masters\metabolution.py:39: RuntimeWarning: invalid value encountered in double_scalars
+  # N
+```
+
+- What does consitutively ON mean?

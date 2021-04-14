@@ -92,7 +92,7 @@ def single_run(init_pos):
       pos[1] -= dy
       alpha = random.uniform(0, 2*math.pi)
     else:
-      solution = euler(solution, dt, kf, kb, pos)
+      solution, f = euler(solution, dt, kf, kb, pos)
       sol[:, k] = solution
       x_pos[k] = pos[0]
       y_pos[k] = pos[1]
@@ -218,7 +218,7 @@ kd = 0.04
 
 dt = 0.01
 t_start = 0
-t_end = 900
+t_end = 500
 t = np.arange(t_start, t_end, dt)
 
 cmap = plt.get_cmap('jet')
@@ -227,6 +227,6 @@ colors = cmap(np.linspace(0, 1.0, len(t)))
 # === S I N G L E ===
 
 if single:
-  single_run([-76, 2])
+  single_run([0, 0])
 else:
   pop_run()
