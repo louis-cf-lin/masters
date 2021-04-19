@@ -3,19 +3,19 @@
 ## 24 March 2021
 
 1. All variables initialised at 0.05  
-Correct
+   Correct
 
 2. 2.5 million iterations but Figure 6 shows it as mid way  
-Just a typo
+   Just a typo
 
 3. Is C concentration correct? (page 6 says typically range between 0 and 2 but peaks at 10)  
-That's fine
+   That's fine
 
 4. The probability of tumbling is too low to remain at areas of high M and E; even when visiting highly desirable areas, bacteria doesn't stay there at all  
-Distribution - cannot tell from an individual bacterium's path
+   Distribution - cannot tell from an individual bacterium's path
 
 5. Do concentrations (variables in square brackets) need to be normalised or something?  
-No
+   No
 
 **Papers to read:**
 
@@ -24,10 +24,10 @@ No
 ## 31 March 2021
 
 1. dt = 0.01?  
-That's fine
+   That's fine
 
 2. Initial values are all 0 except for c=0.5 and h=1?  
-Correct
+   Correct
 
 - Autocatalytic reactions could be a form of memory where, once a bacteria is exposed to an element, it allows the autocatalytic reaction to occur
 - But this isn't scalable - you'd need an element for every unique combination of reactants
@@ -82,10 +82,10 @@ Correct
 
 ![Intuitive cost-benefit analysis of memory](./images/cost-benefit.png)
 
-> - **In a rapidly changing environment, memory provides a selective advantage.** tau indicates mean duration. *b* = benefit. Bottom yellow region is cost of having gene on when not needed.
+> - **In a rapidly changing environment, memory provides a selective advantage.** tau indicates mean duration. _b_ = benefit. Bottom yellow region is cost of having gene on when not needed.
 
 - When does phenotypic memory provide an advantage for cells that respond to a fluctuating environment?  
-*When environments fluctuate rapidly*
+  _When environments fluctuate rapidly_
 
 - How much memory should cells use? i.e. is there an optimal value of the degradation rate? How does long-term growth rate vary with increasing protein degradation?
 
@@ -93,17 +93,17 @@ Correct
 
 ![Periodic environment](./images/optimal-deg-rate.png)
 
-> - **For a perioidic environment, the optimal response is either memoryless or a constitutive, while an intermediate amount of memory is never optimal**. All rates and times are given in units of generation time. Parameters: *b*=1.0, *c*=0.3, *k_on*=0.5
+> - **For a perioidic environment, the optimal response is either memoryless or a constitutive, while an intermediate amount of memory is never optimal**. All rates and times are given in units of generation time. Parameters: _b_=1.0, _c_=0.3, _k_on_=0.5
 
 - Optimal solution is one extreme or the other
   - For longer environments, rapid degradation is optimal (memoryless)
   - For shorter environments, constitutively ON is better (long-term memory)
 
-#### In a *randomly changing environment*
+#### In a _randomly changing environment_
 
 ![Random environment](./images/optimal-deg-rate-random.png)
 
-> - All rates and times are given in units of generation time. Parameters: *b*=1.0, *c*=0.3, *k_on*=0.5, mean tau_env = 3.5
+> - All rates and times are given in units of generation time. Parameters: _b_=1.0, _c_=0.3, _k_on_=0.5, mean tau_env = 3.5
 
 - For random environments, the optimal strategy is to go for the middle-ground solution: that is, not to suffer the consequences of extreme responses
 
@@ -160,7 +160,6 @@ Correct
 
 ![game theory](./images/game-theory.png)
 
-
 #### Implications
 
 > - The resistance switching strategy is evolutionarily stable when the switching rate is smaller than the patch clearance rate (environment -> molecular mechanism)
@@ -171,7 +170,7 @@ Correct
 
 Iteration 6 error
 
-```
+```terminal
 c:\masters\metabolution.py:11: RuntimeWarning: overflow encountered in double_scalars
   return 0.01 * max(-0.1 + C**2 - 0.9*W**2, 0.01)
 c:\masters\metabolution.py:11: RuntimeWarning: invalid value encountered in double_scalars
@@ -192,7 +191,7 @@ c:\masters\metabolution.py:33: RuntimeWarning: invalid value encountered in doub
 
 Iteration 14 error
 
-```
+```terminal
 c:\masters\metabolution.py:39: RuntimeWarning: invalid value encountered in double_scalars
   # F
 c:\masters\metabolution.py:39: RuntimeWarning: invalid value encountered in double_scalars
@@ -209,3 +208,7 @@ c:\masters\metabolution.py:39: RuntimeWarning: invalid value encountered in doub
   - Associative takes inputs S and C and outputs O
   - O gets fed into chemotaxis module
 - Another idea: associative learning a temperature and moving towards it (kinda thermotaxis)
+
+Artificial chemistries Wolfgang Banzhaf
+
+Evolution on multiple timescales
