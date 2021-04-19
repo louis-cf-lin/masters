@@ -10,8 +10,11 @@ def order(chemical):
   return concatenate(sorted(chemical))
 
 def rand_split(chemical):
-  rand_pos = random.randrange(1, len(chemical)-1)
-  return chemical[:rand_pos], chemical[rand_pos:]
+  if len(chemical) == 2:
+    rand_pos = 1
+  else:
+    rand_pos = random.randrange(1, len(chemical))
+  return [chemical[:rand_pos], chemical[rand_pos:]]
 
 
 def rand_float(lower, upper, digits=6):
@@ -19,11 +22,11 @@ def rand_float(lower, upper, digits=6):
   return random.randint(lower*f, upper*f)/f
 
 class Chemical:
-  def __init__(self, formula, isFood):
+  def __init__(self, formula, is_food=False):
     self.formula = formula
     self.potential = rand_float(0, 7.5)
     self.ic = rand_float(0, 2)
-    if isFood:
+    if is_food:
       self.inflow = rand_float(0, 1)
     else:
       self.inflow = None
@@ -50,8 +53,8 @@ class Reaction:
 class Network:
 
   def __init__(self):
-    self.chemical = []
-    self.reactions = []
+    self.chemicals = [Chemical('111'), Chemical('00'), Chemical('01'), Chemical('101'), Chemical('1'), Chemical('0')] #TODO
+    self.reactions = [] #TODO
 
   def __repr__(self):
     return '<Network ' + ' '.join(('{}: {}'.format(item, self.__dict__[item]) for item in self.__dict__)) + '>'
@@ -60,7 +63,6 @@ class Network:
     return  '<class Network>' + '\n'+ ', '.join(('{} = {}'.format(item, self.__dict__[item]) for item in self.__dict__))
 
   def polymer(self, type, *args):
-    print(args)
     if type == 'compose':
       if len(args) == 1:
         raise Exception('Polymer composition passed 1 chemical but expected 2')
@@ -98,26 +100,35 @@ class Network:
         return order(mol_A), order(mol_B)
 
   def new_reaction(self):
-    i = random.randrange(3)
-    # TODO
-    DUMMY_CHEMICAL = '1010'
-    DUMMY_CHEMICAL_1 = '11'
-    DUMMY_CHEMICAL_2 = '00'
-    if i == 0:
-      if len(DUMMY_CHEMICAL) > 1:
-        # return self.reactions.append(self.operator('decompose', DUMMY_CHEMICAL))  
-        return print(self.operator('decompose', DUMMY_CHEMICAL))
-        
-    if i == 1:
-      if len(DUMMY_CHEMICAL_1) + len(DUMMY_CHEMICAL_2) <= self.max_length:
-        return print(self.operator('compose', DUMMY_CHEMICAL_1, DUMMY_CHEMICAL_2))
-    
-    return print(self.operator('decompose', self.operator('compose', DUMMY_CHEMICAL_1, DUMMY_CHEMICAL_2)))
+    # rand_method = random.randrange(3)
+    rand_method = 1
+
+    if rand_method == 0:
+      lhs = random.choice(self.chemicals).formula
+      if len(lhs) > 1:
+        rhs = self.operator('decompose', lhs)
+        self.reactions.append(Reaction([lhs], rhs))
+    else:
+      lhs = (c.formula for c in random.sample(self.chemicals, 2))
+      rhs = [self.operator('compose', lhs[0], lhs[1])]
+      if (rand_method == 1) and (len(''.join(lhs)) <= self.max_length):
+        self.reactions.append(Reaction(lhs, rhs))
+      else:
+        rhs = self.operator('decompose', rhs[0])
+        self.reactions.append(Reaction(lhs, rhs))
+
+    for rhs_chem in rhs:
+      for chem in self.chemicals:
+        print(rhs_chem, chem)
+        if rhs_chem == chem.formula:
+          console.log('found it!')
+          break
     
 
   operator = polymer
   max_length = 4
 
+test = Network()
 
 test1 = Chemical('111', True)
 test2 = Chemical('000', False)
