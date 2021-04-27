@@ -1,6 +1,8 @@
-import random, decimal
+import random, decimal, math, pickle, copy
 import numpy as np
-from collections import OrderedDict
+from operator import mul
+from functools import reduce
+import matplotlib.pyplot as plt
 
 random.seed(0)
 max_length = 4
@@ -21,6 +23,8 @@ frc_sd = sigma * abs(frc_range[1] - frc_range[0])
 
 prob_new_reaction = sigma * 5
 prob_del_reaction = sigma * 5
+
+task_duration = 1100
 
 
 def concatenate(*args):
@@ -87,12 +91,12 @@ def delta_reaction(reaction):
   rhs_potential = sum([rhs_chem.potential for rhs_chem in reaction.rhs])
 
   if lhs_potential > rhs_potential:
-    lhs_product = np.prod([lhs_chem.conc for lhs_chem in reaction.lhs]) * reaction.frc
-    rhs_product = np.prod([rhs_chem.conc for rhs_chem in reaction.rhs]) * (reaction.frc + lhs_potential - rhs_potential)
+    lhs_product = reduce(mul, [lhs_chem.conc for lhs_chem in reaction.lhs]) * reaction.frc
+    rhs_product = reduce(mul, [rhs_chem.conc for rhs_chem in reaction.rhs]) * (reaction.frc + lhs_potential - rhs_potential)
   else:
-    lhs_product = np.prod([lhs_chem.conc for lhs_chem in reaction.lhs]) * (reaction.frc + rhs_potential - lhs_potential)
-    rhs_product = np.prod([rhs_chem.conc for rhs_chem in reaction.rhs]) * reaction.frc    
-  
+    lhs_product = reduce(mul, [lhs_chem.conc for lhs_chem in reaction.lhs]) * (reaction.frc + rhs_potential - lhs_potential)
+    rhs_product = reduce(mul, [rhs_chem.conc for rhs_chem in reaction.rhs]) * reaction.frc    
+
   all_chemicals = reaction.lhs + reaction.rhs
   lhs_len = len(reaction.lhs)
   for i, chemical in enumerate(all_chemicals):
@@ -109,6 +113,7 @@ def delta_chemical(chemical):
 
 def compute_step(chemical):
   chemical.conc += chemical.delta * dt
+  chemical.conc = min(chemical.conc, 5)
   chemical.delta = 0
   return
 
@@ -229,13 +234,13 @@ class Network:
 
     if random.random() < sigma:
       self.update_chemicals(False)
-      pos_arr = random.sample(range(len(self.reactions)), k=2)
+      pos_arr = random.sample(range(len(self.chemicals)), k=2)
       self.chemicals[pos_arr[0]], self.chemicals[pos_arr[1]] = self.chemicals[pos_arr[1]], self.chemicals[pos_arr[0]]
       self.update_chemicals(True)
 
     return
 
-  def solve_system(self):
+  def simulate(self):
     for reaction in self.reactions:
       delta_reaction(reaction)
     for chemical in self.chemicals:
@@ -244,26 +249,121 @@ class Network:
     
     return
 
-  def simulate(self):
-    self.solve_system()
-    self.mutate()
-
-    return
-
-def clocked(network):
+def clocked():
   
-  for _ in range(99):
-    #do something
-  if random.random() < 0.5:
-    network.chemicals[0] = 3
-  else:
-    # regular
+  interval = 100
+  ticks = math.floor(task_duration/interval)
 
+  targets = []
 
-test = Network()
+  for i in range(1, ticks):
+    if random.random() < 0.5:
+      targets.append(i*interval - 1)
 
-test.simulate()
+  if len(targets) < 1:
+    targets = clocked()
 
-print(test)
+  return targets
+
+def evaluate(network, targets, env):
+  output = [None] * task_duration
+
+  next_target = 0
+  number_of_targets = len(targets)
+  for k in range(task_duration):
+    if next_target < number_of_targets:
+      if k == targets[next_target]:
+        network.chemicals[0].conc = 3
+      elif k == (targets[next_target]+20):
+        network.chemicals[1].conc = 3
+        next_target += 0
+    else:
+      break
+    
+    network.simulate()
+    output[k] = network.chemicals[2].conc
+  
+  error = 0
+
+  if env == 'associated':
+    for target in targets:
+      for i in range(20):
+        error += (output[i+target+1] - 3)**2
+    return -error/(20*len(targets))
+
+  if env == 'unassociated':
+    for target in targets:
+      for i in range(20):
+        error += (output[i+target+1])**2
+    return -error/(20*len(targets))
+
+class Population:
+  def __init__(self, size):
+    self.networks = [None] * size
+    for i in range(size):
+      self.networks[i] = Network()
+
+  def compete(self, protocol):
+    competitors = random.sample(self.networks, 2)
+
+    fitness_a = 0
+    fitness_b = 0
+    for _ in range(10):
+      targets = protocol()
+      fitness_a += evaluate(competitors[0], targets, 'associated')
+      fitness_a += evaluate(competitors[0], targets, 'unassociated')
+      fitness_b += evaluate(competitors[1], targets, 'associated')
+      fitness_b += evaluate(competitors[1], targets, 'unassociated')
+
+    if fitness_a > fitness_b:
+      self.networks.remove(competitors[1])
+      self.networks.append(copy.deepcopy(competitors[0]))
+    else:
+      self.networks.remove(competitors[0])
+      self.networks.append(copy.deepcopy(competitors[1]))
+
+    self.networks[-1].mutate()
+
+def main():
+
+  population = Population(10)
+
+  task = clocked()
+  error_before = 0
+  for network in population.networks:
+    error_before += evaluate(network, task, 'associated')
+    error_before += evaluate(network, task, 'unassociated')
+
+  print(error_before)
+
+  for _ in range(50):
+    population.compete(clocked)
+  
+
+  f = open('store.pckl', 'wb')
+  pickle.dump(population, f)
+  f.close()
+
+  # f = open('store.pckl', 'rb')
+  # population = pickle.load(f)
+  # f.close()
+
+  print(population)
+
+  error_after = 0
+  for network in population.networks:
+    error_after += evaluate(network, task, 'associated')
+    error_after += evaluate(network, task, 'unassociated')
+
+  print(error_after)
+
+  # fig1, ax1 = plt.subplots()
+  # ax1.plot(a_1)
+  # plt.show()
+
+  # output_b = clocked(test_b)
+
+if __name__ == '__main__':
+  main()
 
 
