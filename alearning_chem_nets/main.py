@@ -15,18 +15,12 @@ def main():
 
   print(error_before/10)
 
-  for _ in range(50):
+  for _ in range(100):
     population.compete(clocked)
   
   f = open('store.pckl', 'wb')
   pickle.dump(population, f)
   f.close()
-
-  # f = open('store.pckl', 'rb')
-  # population = pickle.load(f)
-  # f.close()
-
-  print(population)
 
   error_after = 0
   for network in population.networks:
@@ -39,9 +33,16 @@ def main():
   # ax1.plot(a_1)
   # plt.show()
 
-  # output_b = clocked(test_b)
+def analyse():
+  f = open('store.pckl', 'rb')
+  population = pickle.load(f)
+  f.close()
+
+  print(population)
+
 
 if __name__ == '__main__':
   main()
+  # analyse()
 
 
