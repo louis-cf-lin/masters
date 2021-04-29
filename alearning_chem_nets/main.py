@@ -13,7 +13,7 @@ def main():
     error_before += evaluate(network, task, 'associated')
     error_before += evaluate(network, task, 'unassociated')
 
-  print(error_before)
+  print(error_before/10)
 
   for _ in range(50):
     population.compete(clocked)
@@ -33,7 +33,7 @@ def main():
     error_after += evaluate(network, task, 'associated')
     error_after += evaluate(network, task, 'unassociated')
 
-  print(error_after)
+  print(error_after/10)
 
   # fig1, ax1 = plt.subplots()
   # ax1.plot(a_1)

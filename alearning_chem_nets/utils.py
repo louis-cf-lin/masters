@@ -1,4 +1,5 @@
-import random, math, params
+import random, math, params, warnings
+import numpy as np
 from functools import reduce
 from operator import mul
 
@@ -67,10 +68,20 @@ def delta_reaction(reaction):
 
   if lhs_potential > rhs_potential:
     lhs_product = reduce(mul, [lhs_chem.conc for lhs_chem in reaction.lhs]) * reaction.frc
-    rhs_product = reduce(mul, [rhs_chem.conc for rhs_chem in reaction.rhs]) * (reaction.frc + lhs_potential - rhs_potential)
+    with warnings.catch_warnings():
+      warnings.filterwarnings('error')
+      try:
+        rhs_product = reduce(mul, [rhs_chem.conc for rhs_chem in reaction.rhs]) * math.exp(- (-np.log(reaction.frc) + (lhs_potential - rhs_potential)))
+      except Warning as e:
+        raise Exception(e)
   else:
-    lhs_product = reduce(mul, [lhs_chem.conc for lhs_chem in reaction.lhs]) * (reaction.frc + rhs_potential - lhs_potential)
-    rhs_product = reduce(mul, [rhs_chem.conc for rhs_chem in reaction.rhs]) * reaction.frc    
+    with warnings.catch_warnings():
+      warnings.filterwarnings('error')
+      try:
+        lhs_product = reduce(mul, [lhs_chem.conc for lhs_chem in reaction.lhs]) *  math.exp(- (-np.log(reaction.frc) + (rhs_potential - lhs_potential)))
+      except Warning as e:
+        raise Exception(e)
+    rhs_product = reduce(mul, [rhs_chem.conc for rhs_chem in reaction.rhs]) * reaction.frc
 
   all_chemicals = reaction.lhs + reaction.rhs
   lhs_len = len(reaction.lhs)
@@ -92,13 +103,16 @@ def compute_step(chemical):
   chemical.delta = 0
   return
 
-def add_gauss(value, sd, range):
-  noise = value + random.gauss(0, sd)
+def add_gauss(value, sd, inclusive_range):
+  noise = random.gauss(0, sd)
   new_value = value + noise
-  if new_value < range[0]:
-    return new_value + (range[0] - new_value)
-  elif new_value > range[1]:
-    return new_value - (new_value - range[1])
+  if new_value < inclusive_range[0]:
+    return inclusive_range[0] + (inclusive_range[0] - new_value)
+  elif new_value > inclusive_range[1]:
+    return inclusive_range[1] - (new_value - inclusive_range[1])
+
+  if new_value == 0:
+      raise Exception('0 value found')
 
   return new_value
 
@@ -123,6 +137,10 @@ def evaluate(network, targets, env):
 
   next_target = 0
   number_of_targets = len(targets)
+
+  for chemical in network.chemicals:
+    chemical.conc = chemical.initial_conc
+
   for k in range(params.task_duration):
     if next_target < number_of_targets:
       if k == targets[next_target]:
@@ -135,7 +153,7 @@ def evaluate(network, targets, env):
     
     network.simulate()
     output[k] = network.chemicals[2].conc
-  
+
   error = 0
 
   if env == 'associated':

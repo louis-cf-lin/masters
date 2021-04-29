@@ -4,13 +4,14 @@ class Chemical:
   def __init__(self, formula):
     self.formula = formula
     self.potential = rand_float(0, 7.5)
-    self.conc = rand_float(0, 2)
+    self.initial_conc = rand_float(0, 2)
     self.inflow = rand_float(0, 1)
     self.decay = rand_float(0, 1)
     self.is_stimulus = False
     self.is_control = False
     self.is_output = False
     self.is_food = False
+    self.conc = 0
     self.delta = 0
   
   def __repr__(self):

@@ -63,7 +63,7 @@ class Network:
 
     for chemical in self.chemicals:
       chemical.potential = add_gauss(chemical.potential, params.potential_sd, params.potential_range)
-      chemical.conc = add_gauss(chemical.conc, params.conc_sd, params.conc_range)
+      chemical.initial_conc = add_gauss(chemical.initial_conc, params.initial_conc_sd, params.initial_conc_range)
       chemical.inflow = add_gauss(chemical.inflow, params.inflow_sd, params.inflow_range)
       chemical.decay = add_gauss(chemical.decay, params.decay_sd, params.decay_range)
 
@@ -72,6 +72,9 @@ class Network:
 
     for reaction in self.reactions:
       reaction.frc = add_gauss(reaction.frc, params.frc_sd, params.frc_range)
+      
+      if reaction.frc == 0:
+        raise Exception('0 value found')
 
     if random.random() < params.prob_new_reaction:
       self.new_reaction()

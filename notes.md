@@ -212,3 +212,8 @@ c:\masters\metabolution.py:39: RuntimeWarning: invalid value encountered in doub
 Artificial chemistries Wolfgang Banzhaf
 
 Evolution on multiple timescales
+
+## 28 April
+
+- Try using k\_{favoured} = e^{-E_a} and k\_{unfavoured} = e^{-(E_A + (R\_{potential} - P\_{potential}))}
+- Chemical initial concentrations should be set, and different from the current concentration

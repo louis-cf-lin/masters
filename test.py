@@ -1,35 +1,10 @@
 import numpy as np
-import random
+import math
 
-# test = [{1,2},{2,3},{3,4}]
+kf = 0
 
-# chosen = random.sample(test, 1)
+E_a = -np.log(kf)
 
-# print(chosen)
+kb = math.exp(- (E_a + 1))
 
-# test.remove(chosen[0])
-
-# test.append(chosen[0])
-
-# test[-1] = {5,6}
-
-# print(test)
-
-
-def guarantee():
-    
-    print('I am running')
-    
-    target = []
-    
-    if random.random() < 0.5:
-        target = [1]
-    
-    if len(target) < 1:
-        target = guarantee()
-        
-    return target
-    
-a = guarantee()
-
-print(a)
+print(kb)
