@@ -21,3 +21,7 @@ prob_new_reaction = sigma * 5
 prob_del_reaction = sigma * 5
 
 task_duration = 1100
+
+competitions = 500
+
+population_size = 20
