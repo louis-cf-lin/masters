@@ -1,6 +1,6 @@
 import random
 
-random.seed(0)
+random.seed(814486224)
 max_length = 4
 dt = 0.01
 sigma = 0.1 # mutation rate
@@ -22,6 +22,6 @@ prob_del_reaction = sigma * 5
 
 task_duration = 1100
 
-competitions = 500
+competitions = 250
 
 population_size = 20

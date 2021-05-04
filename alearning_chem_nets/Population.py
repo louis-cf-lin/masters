@@ -9,7 +9,10 @@ class Population:
       self.networks[i] = Network()
 
   def compete(self, protocol):
-    competitors = random.sample(self.networks, 2)
+    random_indices = random.sample(range(len(self.networks)), 2)
+
+    print('Competitors are index', random_indices)
+    competitors = [self.networks[random_indices[0]], self.networks[random_indices[1]]]
 
     fitness_a = 0
     fitness_b = 0
@@ -23,8 +26,10 @@ class Population:
     if fitness_a > fitness_b:
       self.networks.remove(competitors[1])
       self.networks.append(copy.deepcopy(competitors[0]))
+      print('Winner is index', random_indices[0])
     else:
       self.networks.remove(competitors[0])
       self.networks.append(copy.deepcopy(competitors[1]))
+      print('Winner is index', random_indices[1])
 
     self.networks[-1].mutate()
