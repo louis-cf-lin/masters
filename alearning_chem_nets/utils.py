@@ -135,6 +135,7 @@ def clocked():
 def evaluate(network, targets, env):
   output = [None] * params.task_duration
 
+  target_index = 0
   next_target = 0
   number_of_targets = len(targets)
 
@@ -142,16 +143,18 @@ def evaluate(network, targets, env):
     chemical.conc = chemical.initial_conc
 
   for k in range(params.task_duration):
+
+    network.simulate()
+
     if next_target < number_of_targets:
       if k == targets[next_target]:
         network.chemicals[0].conc = 3
       elif k == (targets[next_target]+20):
         network.chemicals[1].conc = 3
-        next_target += 0
+        next_target += 1
     else:
       break
     
-    network.simulate()
     output[k] = network.chemicals[2].conc
 
   error = 0

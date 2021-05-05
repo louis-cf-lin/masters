@@ -217,3 +217,22 @@ Evolution on multiple timescales
 
 - Try using k\_{favoured} = e^{-E_a} and k\_{unfavoured} = e^{-(E_A + (R\_{potential} - P\_{potential}))}
 - Chemical initial concentrations should be set, and different from the current concentration
+
+Fixes:
+
+- Using new rate constant equations
+- Fixed mirroring at ranges
+- Fixed targets not incrementing
+
+## 05 May
+
+**Tasks:**
+
+- Use RK4
+- Refactor to separate genotype from phenotype with g2p mapping (check out attached Matthew's code)
+- Confirm GA is working as hoped by giving it easy problems to solve:
+  1. Fitness = sum of genes
+  2. Fitness = final concentration of some specific chemical
+  3. Consider adding visualisations of fitness, "gene pool" plot, or similar
+- Mechanism to remove chemicals from networks
+- GA exercise
