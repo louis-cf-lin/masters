@@ -236,3 +236,14 @@ Fixes:
   3. Consider adding visualisations of fitness, "gene pool" plot, or similar
 - Mechanism to remove chemicals from networks
 - GA exercise
+
+## 12 May
+
+**Progress:**
+
+- RK4 requires additional formulation of ODE's
+- Decided to continue using phenotype as varying initialisation ranges make it inefficient to do g2p mapping
+- Tested GA on optimising for an output chemical potential of 5
+  - Without mutation, the plots match the outputs and correspond with optimisation
+  - With mutation, plots show convergence
+- There is a sigma\*5 probability of deleting a network
