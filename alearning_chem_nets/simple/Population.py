@@ -1,5 +1,5 @@
 import random, copy, params
-from utils import mutate_network, evaluate_network, evaluate_on_task
+from utils import mutate_network
 from Network import Network
 
 class Population:
@@ -13,12 +13,10 @@ class Population:
 
     competitors = [self.networks[random_indices[0]], self.networks[random_indices[1]]]
 
-    fitness_0 = evaluate_on_task(competitors[0])
-    fitness_1 = evaluate_on_task(competitors[1])
-
-    if fitness_0 > fitness_1:
+    if competitors[0].fitness > competitors[1].fitness:
       self.networks[random_indices[1]] = mutate_network(copy.deepcopy(competitors[0]))
-      print('Individual', random_indices[0], 'replacing', random_indices[1])
+      # print('Individual', random_indices[0], 'replacing', random_indices[1])
     else:
       self.networks[random_indices[0]] = mutate_network(copy.deepcopy(competitors[1]))
-      print('Individual', random_indices[1], 'replacing', random_indices[0])
+      # print('Individual', random_indices[1], 'replacing', random_indices[0])
+    

@@ -242,8 +242,32 @@ Fixes:
 **Progress:**
 
 - RK4 requires additional formulation of ODE's
+  - The paper used Euler so should be OK
 - Decided to continue using phenotype as varying initialisation ranges make it inefficient to do g2p mapping
 - Tested GA on optimising for an output chemical potential of 5
   - Without mutation, the plots match the outputs and correspond with optimisation
   - With mutation, plots show convergence
 - There is a sigma\*5 probability of deleting a network
+
+**Questions:**
+
+- What is the mutation rate sigma?
+- No adaptive mutation over time?
+- What is the range for concentration? Is reflection used?
+- What's a bolus and how is it implemented?
+
+**Meeting notes:**
+
+- Horizontal gene transfer
+  - Inherit both parents' genes weighted on their fitness
+  - i.e. don't completely replace genes
+- Use demes
+  - Compete only between neighbours
+  - Visualise to see spread of "good" genes
+- Use a **set** of systematically contrived tasks for deterministic evaluation
+  - Store fitness so don't have to reevaluate
+  - Can try creating new sets of tasks every _x_ generations
+- Regererating entirely new generations and creating tasks for each new generation
+- Secondary mutation rate (see Matthew's message)
+  - **Every** mutatable property has some uniform chance of being mutated
+- Think about combining associative learning in chemical networks with embodied chemotaxis

@@ -1,7 +1,7 @@
 import random, params
 from Chemical import Chemical
 from Reaction import Reaction
-from utils import polymer, add_gauss, delta_reaction, delta_chemical, compute_step
+from utils import evaluate_on_line, polymer, add_gauss, delta_reaction, delta_chemical, compute_step
 
 class Network:
 
@@ -15,6 +15,7 @@ class Network:
       self.new_reaction()
     random.shuffle(self.chemicals)
     self.update_chemicals(True)
+    self.fitness = evaluate_on_line(self)
 
   def __repr__(self):
     return '<Network ' + ' '.join(('{}: {}'.format(item, self.__dict__[item]) for item in self.__dict__)) + '>'

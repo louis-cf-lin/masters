@@ -100,6 +100,9 @@ def delta_chemical(chemical):
 def compute_step(chemical):
   chemical.conc += chemical.delta * params.dt
   chemical.conc = min(chemical.conc, 5)
+  chemical.conc = max(chemical.conc, 0)
+  if (chemical.conc < 0 or chemical.conc > 5):
+    print(chemical.conc)
   chemical.delta = 0
   return
 
@@ -141,6 +144,8 @@ def mutate_network(network):
     network.chemicals[pos_arr[0]], network.chemicals[pos_arr[1]] = network.chemicals[pos_arr[1]], network.chemicals[pos_arr[0]]
     network.update_chemicals(True)
   
+  network.fitness = evaluate_on_line(network)
+  
   return network
 
 def evaluate_network(network):
@@ -154,13 +159,12 @@ def evaluate_population(population):
 
   return fitness/len(population.networks)
 
-def evaluate_on_task(network):
+def evaluate_on_line(network):
   output = [None] * params.task_duration
 
   for chemical in network.chemicals:
     chemical.conc = chemical.initial_conc
     output[0] = network.chemicals[2].conc
-
 
   for i in range(1, params.task_duration):
     network.simulate()
@@ -171,6 +175,3 @@ def evaluate_on_task(network):
     error += abs(output[i] - 3)
   
   return -error
-  
-  return
-

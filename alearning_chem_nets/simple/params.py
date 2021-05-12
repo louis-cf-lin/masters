@@ -3,7 +3,7 @@ import random
 random.seed(814486224)
 max_length = 4
 dt = 0.01
-sigma = 0.1 # mutation rate
+sigma = 0.01 # mutation rate
 
 potential_range = [0, 7.5]
 initial_conc_range = [0, 5]
@@ -20,7 +20,7 @@ frc_sd = sigma * abs(frc_range[1] - frc_range[0])
 prob_new_reaction = sigma * 5
 prob_del_reaction = sigma * 5
 
-competitions = 150
+competitions = 1000
 
 population_size = 10
 
