@@ -1,38 +1,31 @@
-from functools import reduce
+import random
 
-def calculate_deltas(reaction):
-  # calculate consumption coeff (product of LHS chemical concs)
-  lhs_product = reduce(lambda x, y: x*y, [chemical.conc for chemical in reaction.lhs])
-  # calculate generation coeff (product of RHS chemical concs)
-  rhs_product = reduce(lambda x, y: x*y, [chemical.conc for chemical in reaction.rhs])
-  
-  # update chemical d/dt's
-  for chemical in reaction.lhs:
-    chemical.delta += rhs_product*reaction.backward - lhs_product*reaction.forward
-  for chemical in reaction.rhs:
-    chemical.delta += lhs_product*reaction.forward - rhs_product*reaction.backward
+def concatenate(*args):
+  return ''.join(*args)
 
-def simulate_step(network, stimulus_bolus=False, control_bolus=False, dt=0.01):
-  # reset all deltas
-  for chemical in network.chemicals:
-    chemical.delta = 0
+def rand_split(chemical, max_length=4):
+  length = len(chemical)
+  if length > max_length:
+    pos = random.randint(length - max_length, max_length)
+  else:
+    pos = random.randrange(1, length)
+  return [chemical[:pos], chemical[pos:]]
 
-  # update deltas (generation and consumption of reactions)
-  for reaction in network.reactions:
-    calculate_deltas(reaction)
-  
-  for (i, chemical) in enumerate(network.chemicals):
-    # update deltas (decay and inflow of chemicals)
-    if i == 3:
-      chemical.delta += chemical.inflow - chemical.decay*chemical.conc
+def polymer(type, *args):
+  if type == 'compose':
+    if len(args) == 1:
+      raise Exception('Polymer composition passed 1 chemical but expected 2')
     else:
-      chemical.delta -= chemical.decay*chemical.conc
+      return [concatenate(args)]
+  else:
+    if len(args) > 1:
+      raise Exception('Polymer decomposition passed ', len(args), ' chemicals but expected 1')
+    else:
+      return rand_split(args[0])
 
-    # update concs
-    chemical.conc += chemical.delta*dt
-  
-  # set stimulus and control chemical boluses
-  if stimulus_bolus:
-    network.chemicals[0].conc = 3
-  elif control_bolus:
-    network.chemicals[1].conc = 3
+def compete(network_1, network_2):
+  if network_1.fitness > network_2.fitness:
+    return network_1, network_2
+  else:
+    return network_2, network_1
+

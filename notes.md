@@ -271,3 +271,25 @@ Fixes:
 - Secondary mutation rate (see Matthew's message)
   - **Every** mutatable property has some uniform chance of being mutated
 - Think about combining associative learning in chemical networks with embodied chemotaxis
+
+Dear Simon,
+
+I hope you're well.
+
+My name is Louis and I'm a Masters student studying under the supervision of Dr. Matthew Egbert, a former University of Sussex colleague of yours. I've been working on trying to reproduce your work in Evolution of Associative Learning in Chemical Networks (McGregor et al., 2012). I'm almost there, just missing a few key calculations and was hoping you could answer some of my questions.
+
+As I understand, the favoured rate constant is an evolved parameter and the non-favoured rate constant is calculated using the chemical potential of the species involved.
+
+1. How did you determine the favoured direction?
+2. How did you calculate the non-favoured rate constant?
+3. Why is the favoured rate constant an evolved parameter rather than, say, a characteristic of the chemicals involved?
+
+And a couple of unrelated questions:
+
+4. Was there a single sigma value that produced the champion networks?
+5. The paper doesn't mention any mechanisms to remove chemicals from a network. When reactions were removed from a network, were the chemicals involved also removed (provided they were not involved in another reaction)?
+
+Thank you for publishing your work, it's been an enjoyable challenge to code. Hope to hear from you soon.
+
+Best regards,
+Louis
