@@ -278,18 +278,44 @@ I hope you're well.
 
 My name is Louis and I'm a Masters student studying under the supervision of Dr. Matthew Egbert, a former University of Sussex colleague of yours. I've been working on trying to reproduce your work in Evolution of Associative Learning in Chemical Networks (McGregor et al., 2012). I'm almost there, just missing a few key calculations and was hoping you could answer some of my questions.
 
-As I understand, the favoured rate constant is an evolved parameter and the non-favoured rate constant is calculated using the chemical potential of the species involved.
+1. As I understand, the favoured direction of reactions is determined by the chemical potential of the species involved. Is this just the sum of the chemical potentials of LHS species vs. RHS species? Or is it another means of determining the favoured direction?
 
-1. How did you determine the favoured direction?
-2. How did you calculate the non-favoured rate constant?
-3. Why is the favoured rate constant an evolved parameter rather than, say, a characteristic of the chemicals involved?
+2. From the paper, the favoured rate constant is an evolved parameter and the non-favoured rate constant is calculated using the chemical potential of the species involved. I'm currently using the following equations:
 
-And a couple of unrelated questions:
+[insert equations here]
 
-4. Was there a single sigma value that produced the champion networks?
-5. The paper doesn't mention any mechanisms to remove chemicals from a network. When reactions were removed from a network, were the chemicals involved also removed (provided they were not involved in another reaction)?
+where E_a is the activation energy, R is the sum of reactants, and P is the sum of products. Given we have the favoured rate constant, and the all the chemical potentials, we can work backwards to calculate E_a, and thus, the non-favoured rate constant. Is this comparable/correct to your approach?
 
-Thank you for publishing your work, it's been an enjoyable challenge to code. Hope to hear from you soon.
+3. Why is the favoured rate constant an evolved parameter rather than, say, a characteristic of the chemicals involved (i.e. like the non-favoured rate constant)?
+
+And a couple of other unrelated questions:
+
+4. Was there a single mutation rate, sigma, that produced the champion networks? Did sigma change throughout the course of a protocol/task to help the population of networks converge?
+
+5. The champion networks reported in the supporting text have fewer chemicals than I expected. This leads me to believe chemicals were also removed from networks during evolution, but the paper doesn't mention any mechanisms to do so. Was this the case? If so, what was the method? E.g. when reactions were removed from a network, the chemicals involved were also removed (provided they were not involved in another reaction).
+
+Thank you for publishing your work, it's been an enjoyable challenge to code. I have appended the results of my reproducing your work with the parameters prescribed and I was happy to see comparable results to yours. Hope to hear from you soon.
 
 Best regards,
 Louis
+
+[Attach plots]
+
+## 26 May
+
+- Combine associative learning with embodied approach
+
+  - Associative learning is not relevant unless acted upon
+  - Learn some association (e.g. temperature corresponds to toxin), then perform chemotaxis
+  - Think about what are the actions available to an agent (most obvious is taxis)
+  - Associate environment with metabolic state
+
+- Rewatch the School of Biological Sciences talk (notes already written)
+  - The dynamical plots are something I could recreate
+  - Numerically map the behaviour by sampling at set intersections
+- Read through [new paper](http://www.matthewegbert.com/files/EgbertDiPaoloBarandiaran2009_Chemoethology_of_an_adaptive_protocell.pdf)
+- Brainstorm research questions
+  - Draw out ideas on paper or whiteboard
+  - Write a short "pitch" for each idea
+  - Imagine what plots you would generate by the end (what are the axis labels etc.)
+- 2D plot of fitness with an extra gene that tracks inheritance
