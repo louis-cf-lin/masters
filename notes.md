@@ -319,3 +319,15 @@ Louis
   - Write a short "pitch" for each idea
   - Imagine what plots you would generate by the end (what are the axis labels etc.)
 - 2D plot of fitness with an extra gene that tracks inheritance
+
+## 9 June
+
+- When to map genotype to phenotype? On every call?
+- Should I write test cases?
+- Is sigmoid threshold the point at which output is 0?
+- Distance from circumference of center?
+- Output scale?
+
+set constants for gene index
+write more classes e.g. for motor, sensors
+prepareToUpdate() and update()
