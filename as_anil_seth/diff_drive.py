@@ -13,7 +13,7 @@ class Animat:
     self.theta = 0
     self.dtheta = 0
     self.v_l = 2.8
-    self.v_r = 0
+    self.v_r = 2.7
   
   def prepare_to_update(self):
     magnitude = (self.v_l + self.v_r) / 2
