@@ -1,7 +1,9 @@
-import math
+import math, random
 import numpy as np
 from enum import Enum
 import matplotlib.pyplot as plt
+
+np.random.seed(100)
 
 START_Y = 0
 CTRL1_X = 1
@@ -15,6 +17,9 @@ BAT = 8
 
 L_SGMD = 9
 R_SGMD = 10
+
+max_x = 200
+max_y = 200
 
 def sigmoid(x, thold):
   y = 1/(1 + np.exp(-x - thold))
@@ -33,28 +38,25 @@ class Object:
   radius = 16
   def __init__(self, type):
     self.type = type
-    self.x = np.random.randint(201) # (0,200)
-    self.y = np.random.randint(201)
+    self.x = np.random.randint(max_x+1) # (0,200)
+    self.y = np.random.randint(max_y+1)
     self.dist_from_animat = 0
 
 class Env:
-  N_OBJECTS = [1, 0, 0]
+  N_OBJECTS = [1, 1, 1]
   def __init__(self):
     self.objects = [[Object(str(type.name)) for _ in range(Env.N_OBJECTS[type.value])] for type in ObjectTypes]
-    print(self.objects)
 
   def get_min_dist(self, animat):
     for type_index, type_objects in enumerate(self.objects): # for each object type
-      for object_index, object in enumerate(type_objects):
+      for object in type_objects:
         object.dist_from_animat = (animat.x - object.x)**2 + (animat.y - object.y)**2 # efficient euclidean distance
-        if object.dist_from_animat < animat.min_dist[type_index]:
-          animat.min_dist[type_index] = object.dist_from_animat
+        if object.dist_from_animat < animat.min_dist_sq[type_index]:
+          animat.min_dist_sq[type_index] = object.dist_from_animat
           animat.closest_objects[type_index] = object
-          # print(object_index)
 
     for type in ObjectTypes:
-      animat.min_dist[type.value] = min(animat.min_dist[type.value], 200) # (0,200)
-      animat.min_dist[type.value] = animat.min_dist[type.value] / 200 # (0,1)
+      animat.min_dist_sq[type.value] = min(animat.min_dist_sq[type.value], 200**2) # (0,40000)
 
     # print(animat.closest)
     # plt.plot(animat.x, animat.y, 'o', color='black')
@@ -67,6 +69,13 @@ class Env:
     # plt.xlim(0, 200)
     # plt.ylim(0, 200)
     # plt.show()
+  
+  def set_new_object(self):
+    for object_type in ObjectTypes: # for each object type
+      for object in self.objects[object_type.value]:
+        if object.dist_from_animat <= (Animat.radius + Object.radius)**2:
+          object = Object(str(object_type.name))
+          return
 
 class Link:
   N_GENES = 9
@@ -84,11 +93,14 @@ class Link:
     self.S = genome[S] # (0,1)
     self.infl_bat = int(genome[BAT] < 0.5) # 0 or 1
 
-  def output(self, input, battery):
+    # plt.plot(self.ctrl_x, self.ctrl_y)
+    # plt.show()
+
+  def get_output(self, input, batteries):
     out = np.interp(input, self.ctrl_x, self.ctrl_y)
     unscaled = out
 
-    B = battery[self.infl_bat]
+    B = batteries[self.infl_bat]
     out = out + B * self.O # offset (-1,1)
     out = out + out * (B * 2.0 - 1.0) * self.S # multiply (-1,1), i.e. double or cancel
 
@@ -100,7 +112,11 @@ class Animat:
   N_LINKS = len(ObjectTypes) * Link.N_LINKS_PER_TYPE
   N_GENES = N_LINKS * Link.N_GENES
 
+  MAX_BATTERY = 200.0
+  MAX_LIFE = 800
+
   radius = 5
+  sensor_angles = [math.pi/4, -math.pi/4]
 
   def __init__(self, genome=None, tholds=None):
     if genome is None:
@@ -109,68 +125,145 @@ class Animat:
       self.genome = genome
       
     self.links = [Link(self.genome[link_index*Link.N_GENES:link_index*Link.N_GENES+Link.N_GENES]) for link_index in range(Animat.N_LINKS)]
-    print(self.links)
 
     if tholds is None:
       self.tholds = np.random.rand(2) * 6.0 - 3.0
     else:
       self.tholds = tholds
 
-    self.x = np.random.randint(201) # (0,200)
-    self.y = np.random.randint(201)
+    self.x = np.random.randint(max_x+1) # (0,200)
+    self.y = np.random.randint(max_y+1)
     self.theta = np.random.rand() * 2*math.pi
     self.dx = 0
     self.dy = 0
     self.dtheta = 0
-    self.min_dist = [math.inf] * len(ObjectTypes)
+    self.min_dist_sq = [math.inf] * len(ObjectTypes)
     self.closest_objects = [None] * len(ObjectTypes)
-    self.battery = [1.0, 1.0]
+    self.batteries = [Animat.MAX_BATTERY, Animat.MAX_BATTERY]
     self.motor_states = [0.0, 0.0]
+    self.status = 'alive'
   
   def set_motor_states(self):
-    link_index = 0
-    l_out = 0
-    r_out = 0
-    for type in ObjectTypes: # 3
+    # larger falloff means farther sight
+    falloff = 1
+    for side in Sides:
+      # all link outputs summed at one motor
+      sum = 0
 
+      sens_angle = self.theta + self.sensor_angles[side.value]
+      sens_x_pos = self.x + self.radius * math.cos(sens_angle)
+      sens_y_pos = self.y + self.radius * math.sin(sens_angle)
+      
+      for type in ObjectTypes:
+        # print(side.name, type.name)
+        obj_x_pos = self.closest_objects[type.value].x
+        obj_y_pos = self.closest_objects[type.value].y
 
-      for _ in range(Animat.N_LINKS_PER_SENSOR): # 3
-        output_sum += self.links[link_index].output(self.min_dist[type.value], self.battery)
-        link_index += 1
+        d_sq = self.min_dist_sq[type.value] / 40000
+        # print('distance squared:', d_sq)
+        omni = falloff/(falloff+d_sq)
+
+        # sensor to object vector
+        s2o = [obj_x_pos - sens_x_pos, 
+              obj_y_pos - sens_y_pos]
+
+        s2o_mag = np.sqrt(s2o[0]**2 + s2o[1]**2)
+        # normalise
+        if s2o_mag > 0:
+          s2o = [v / s2o_mag for v in s2o]
         
-    self.motor_states[Sides.LEFT.value] = sigmoid(l_out, self.tholds[Sides.LEFT.value])
-    self.motor_states[Sides.RIGHT.value] = sigmoid(r_out, self.tholds[Sides.RIGHT.value])
-    
+        # print('sensor to object vector:', s2o)
 
+        # sensor direction unit vector
+        sens_uv = [math.cos(sens_angle),
+                    math.sin(sens_angle)]
+        
+        # print('sensor unit vector:', sens_uv)
+
+        # positive component of sensor to object projection on sensor direction
+        # print("projection:", s2o[0]*sens_uv[0] + s2o[1]*sens_uv[1])
+        input = omni * max(0.0, s2o[0]*sens_uv[0] + s2o[1]*sens_uv[1])
+        
+        # map input to 
+        for link in self.links[type.value*Link.N_LINKS_PER_TYPE:type.value*Link.N_LINKS_PER_TYPE+Link.N_LINKS_PER_TYPE]:
+
+          sum += link.get_output(input, self.batteries)
+
+      # print(sum)
+      self.motor_states[side.value] = sigmoid(sum, self.tholds[side.value])
 
     magnitude = (self.motor_states[Sides.LEFT.value] + self.motor_states[Sides.RIGHT.value]) / 2
     self.dx = magnitude * math.cos(self.theta)
     self.dy = magnitude * math.sin(self.theta)
     self.dtheta = (self.motor_states[Sides.LEFT.value] + self.motor_states[Sides.RIGHT.value]) / (Animat.radius*2)
 
+
+    # plt.plot(self.x, self.y, 'o', color='black')
+    # plt.arrow(self.x, self.y, 10*math.cos(self.theta + self.sensor_angles[0]), 10*math.sin(self.theta + self.sensor_angles[0]), head_width=1, head_length=1)
+    # plt.arrow(self.x, self.y, 10*math.cos(self.theta + self.sensor_angles[1]), 10*math.sin(self.theta + self.sensor_angles[1]), head_width=1, head_length=1)
+    # for obj in self.closest_objects:
+    #   plt.plot(obj.x, obj.y, 'o', label=obj.type)
+    # plt.xlim(0, max_x)
+    # plt.ylim(0, max_y)
+    # plt.legend()
+    # plt.show()
+
     print(self.motor_states)
   
-  def update_position(self):
+  def update(self, env):
     self.x += self.dx
     self.y += self.dy
     self.theta += self.dtheta
 
+    for object in ObjectTypes:
+      if math.sqrt(self.min_dist_sq[object.value]) <= (Animat.radius + Object.radius):
+        if object.name == 'TRAP':
+          self.status = 'dead'
+          return
+        else:
+          self.batteries[object.value] = Animat.MAX_BATTERY
+          env.set_new_object(self)
+    
+    for i, battery in enumerate(self.batteries):
+      self.batteries[i] = battery - 1
+      if self.batteries[i] <= 0:
+        self.status = 'dead'
+
 def prepare_to_update(env, animat):
   env.get_min_dist(animat) # finds closest object of each type
-  animat.set_motor_states()
+  animat.set_motor_states() # calculate outputs and set motors derivs
 
-def update(animat):
-  animat.update_position()
-  env.check_for
-
+def update(env, animat):
+  animat.update(env) # update x, y, theta
 
 crib = Env()
 dude = Animat()
-prepare_to_update(crib, dude)
-update(dude)
 
+x_traj = [None] * Animat.MAX_LIFE
+y_traj = [None] * Animat.MAX_LIFE
 
-# for link in dude.links:
-#   plt.plot(link.ctrl_x, link.ctrl_y)
+def trial(animat, env):
+  for i in range(Animat.MAX_LIFE):
+    x_traj[i] = animat.x
+    y_traj[i] = animat.y
+    prepare_to_update(env, animat)
+    update(env, animat)
+    print(i)
+    if animat.status == 'dead':
+      return
+
+for i in range(Animat.MAX_LIFE)[::2]:
+  circle = plt.Circle((x_traj[i], y_traj[i]), Animat.radius, fill=False, alpha=0.25)
+  plt.gca().add_patch(circle)
+
+colors = ['g', 'b', 'r']
+for i, obj in enumerate(dude.closest_objects):
+  circle = plt.Circle((obj.x, obj.y), Object.radius, color=colors[i], label=obj.type)
+  plt.gca().add_patch(circle)
+plt.legend()
+plt.xlim(0, max_x)
+plt.ylim(0, max_y)
+plt.show()
 
 print('stop right there')
+
