@@ -40,19 +40,19 @@ class Object:
     self.type = type
     self.x = np.random.randint(max_x+1) # (0,200)
     self.y = np.random.randint(max_y+1)
-    self.dist_from_animat = 0
+    self.dist_from_animat_sq = 0
 
 class Env:
-  N_OBJECTS = [1, 1, 1]
+  N_OBJECTS = [3, 3, 9]
   def __init__(self):
     self.objects = [[Object(str(type.name)) for _ in range(Env.N_OBJECTS[type.value])] for type in ObjectTypes]
 
   def get_min_dist(self, animat):
     for type_index, type_objects in enumerate(self.objects): # for each object type
       for object in type_objects:
-        object.dist_from_animat = (animat.x - object.x)**2 + (animat.y - object.y)**2 # efficient euclidean distance
-        if object.dist_from_animat < animat.min_dist_sq[type_index]:
-          animat.min_dist_sq[type_index] = object.dist_from_animat
+        object.dist_from_animat_sq = (animat.x - object.x)**2 + (animat.y - object.y)**2 # efficient euclidean distance
+        if object.dist_from_animat_sq < animat.min_dist_sq[type_index]:
+          animat.min_dist_sq[type_index] = object.dist_from_animat_sq
           animat.closest_objects[type_index] = object
 
     for type in ObjectTypes:
@@ -72,9 +72,9 @@ class Env:
   
   def set_new_object(self):
     for object_type in ObjectTypes: # for each object type
-      for object in self.objects[object_type.value]:
-        if object.dist_from_animat <= (Animat.radius + Object.radius)**2:
-          object = Object(str(object_type.name))
+      for i, object in enumerate(self.objects[object_type.value]):
+        if math.sqrt(object.dist_from_animat_sq) <= Animat.radius:
+          self.objects[object_type.value][i] = Object(str(object_type.name))
           return
 
 class Link:
@@ -142,6 +142,7 @@ class Animat:
     self.batteries = [Animat.MAX_BATTERY, Animat.MAX_BATTERY]
     self.motor_states = [0.0, 0.0]
     self.status = 'alive'
+    self.fitness = 0
   
   def set_motor_states(self):
     # larger falloff means farther sight
@@ -207,8 +208,6 @@ class Animat:
     # plt.ylim(0, max_y)
     # plt.legend()
     # plt.show()
-
-    print(self.motor_states)
   
   def update(self, env):
     self.x += self.dx
@@ -216,18 +215,20 @@ class Animat:
     self.theta += self.dtheta
 
     for object in ObjectTypes:
-      if math.sqrt(self.min_dist_sq[object.value]) <= (Animat.radius + Object.radius):
+      if math.sqrt(self.min_dist_sq[object.value]) <= Animat.radius:
         if object.name == 'TRAP':
           self.status = 'dead'
           return
         else:
           self.batteries[object.value] = Animat.MAX_BATTERY
-          env.set_new_object(self)
+          self.min_dist_sq[object.value] = math.inf
+          env.set_new_object()
+          return
     
-    for i, battery in enumerate(self.batteries):
-      self.batteries[i] = battery - 1
-      if self.batteries[i] <= 0:
-        self.status = 'dead'
+    self.batteries = [battery - 1 for battery in self.batteries]
+    if sum(self.batteries) <= 0:
+      self.status = 'dead'
+
 
 def prepare_to_update(env, animat):
   env.get_min_dist(animat) # finds closest object of each type
@@ -236,34 +237,67 @@ def prepare_to_update(env, animat):
 def update(env, animat):
   animat.update(env) # update x, y, theta
 
-crib = Env()
-dude = Animat()
-
-x_traj = [None] * Animat.MAX_LIFE
-y_traj = [None] * Animat.MAX_LIFE
-
 def trial(animat, env):
+  x_traj = [None] * Animat.MAX_LIFE
+  y_traj = [None] * Animat.MAX_LIFE
+  fitness = 0
+
   for i in range(Animat.MAX_LIFE):
     x_traj[i] = animat.x
     y_traj[i] = animat.y
     prepare_to_update(env, animat)
     update(env, animat)
-    print(i)
+    fitness += sum(animat.batteries) / 400.0
     if animat.status == 'dead':
-      return
+      break
 
-for i in range(Animat.MAX_LIFE)[::2]:
-  circle = plt.Circle((x_traj[i], y_traj[i]), Animat.radius, fill=False, alpha=0.25)
-  plt.gca().add_patch(circle)
+  # for i in range(Animat.MAX_LIFE)[::2]:
+  #   circle = plt.Circle((x_traj[i], y_traj[i]), Animat.radius, fill=False, alpha=0.25)
+  #   plt.gca().add_patch(circle)
 
-colors = ['g', 'b', 'r']
-for i, obj in enumerate(dude.closest_objects):
-  circle = plt.Circle((obj.x, obj.y), Object.radius, color=colors[i], label=obj.type)
-  plt.gca().add_patch(circle)
-plt.legend()
-plt.xlim(0, max_x)
-plt.ylim(0, max_y)
-plt.show()
+  # colors = ['g', 'b', 'r']
+  # for i, obj in enumerate(animat.closest_objects):
+  #   circle = plt.Circle((obj.x, obj.y), Object.radius, color=colors[i], label=obj.type, fill=False)
+  #   plt.gca().add_patch(circle)
+  # plt.legend()
+  # plt.xlim(0, max_x)
+  # plt.ylim(0, max_y)
+  # plt.show()
+
+  animat.fitness = fitness
+
+class Population:
+  SIZE = 100
+  def __init__(self):
+    self.animats = [Animat() for _ in range(Population.SIZE)]
+  
+  def evaluate(self, env):
+    for animat in self.animats:
+      trial(animat, env)
+
+  def new_gen(self):
+    new_animats = [None] * Population.SIZE
+    max = np.max([animat.fitness for animat in self.animats])
+    min = np.min([animat.fitness for animat in self.animats])
+    i = 0
+    while (None in new_animats):
+      for animat in self.animats:
+        p_selection = (animat.fitness - min) / (max - min + 1) # linear selection prob
+        if np.random.rand() < p_selection:
+          new_animats[i] = Animat(animat.genome)
+          i += 1
+          if i == Population.SIZE:
+            self.animats = new_animats
+            return
+
+n_generations = 200
+
+env = Env()
+pop = Population()
+for i in range(n_generations):
+  pop.evaluate(env)
+  print(np.mean([animat.fitness for animat in pop.animats]))
+  pop.new_gen()
+  print(i, 'generation')
 
 print('stop right there')
-
