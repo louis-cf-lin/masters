@@ -199,15 +199,15 @@ class Animat:
     self.dtheta = (self.motor_states[Sides.LEFT.value] + self.motor_states[Sides.RIGHT.value]) / (Animat.radius*2)
 
 
-    # plt.plot(self.x, self.y, 'o', color='black')
-    # plt.arrow(self.x, self.y, 10*math.cos(self.theta + self.sensor_angles[0]), 10*math.sin(self.theta + self.sensor_angles[0]), head_width=1, head_length=1)
-    # plt.arrow(self.x, self.y, 10*math.cos(self.theta + self.sensor_angles[1]), 10*math.sin(self.theta + self.sensor_angles[1]), head_width=1, head_length=1)
-    # for obj in self.closest_objects:
-    #   plt.plot(obj.x, obj.y, 'o', label=obj.type)
-    # plt.xlim(0, max_x)
-    # plt.ylim(0, max_y)
-    # plt.legend()
-    # plt.show()
+    plt.plot(self.x, self.y, 'o', color='black')
+    plt.arrow(self.x, self.y, 10*math.cos(self.theta + self.sensor_angles[0]), 10*math.sin(self.theta + self.sensor_angles[0]), head_width=1, head_length=1)
+    plt.arrow(self.x, self.y, 10*math.cos(self.theta + self.sensor_angles[1]), 10*math.sin(self.theta + self.sensor_angles[1]), head_width=1, head_length=1)
+    for obj in self.closest_objects:
+      plt.plot(obj.x, obj.y, 'o', label=obj.type)
+    plt.xlim(0, max_x)
+    plt.ylim(0, max_y)
+    plt.legend()
+    plt.show()
   
   def update(self, env):
     self.x += self.dx
@@ -290,14 +290,24 @@ class Population:
             self.animats = new_animats
             return
 
-n_generations = 200
+n_generations = 10
 
 env = Env()
 pop = Population()
+min_fitness = [None] * n_generations
+mean_fitness = [None] * n_generations
+max_fitness = [None] * n_generations
 for i in range(n_generations):
   pop.evaluate(env)
-  print(np.mean([animat.fitness for animat in pop.animats]))
+  min_fitness[i] = np.min([animat.fitness for animat in pop.animats])
+  mean_fitness[i] = np.mean([animat.fitness for animat in pop.animats])
+  max_fitness[i] = np.max([animat.fitness for animat in pop.animats])
   pop.new_gen()
   print(i, 'generation')
+
+plt.plot(min_fitness)
+plt.plot(mean_fitness)
+plt.plot(max_fitness)
+plt.show()
 
 print('stop right there')

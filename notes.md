@@ -331,3 +331,11 @@ Louis
 set constants for gene index
 write more classes e.g. for motor, sensors
 prepareToUpdate() and update()
+
+- Plots of sensor inputs and motor states
+- Deterministic animat position and a different environment every generation
+- Not spawn on top of trap
+- Number of food and waters
+- Scaling the environment to an appropriate range
+- Consider not squashing in sigmoid function
+-
