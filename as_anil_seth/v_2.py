@@ -43,7 +43,7 @@ class Object:
     self.dist_from_animat_sq = 0
 
 class Env:
-  N_OBJECTS = [3, 3, 9]
+  N_OBJECTS = [1, 0, 0]
   def __init__(self):
     self.objects = [[Object(str(type.name)) for _ in range(Env.N_OBJECTS[type.value])] for type in ObjectTypes]
 
@@ -297,6 +297,7 @@ pop = Population()
 min_fitness = [None] * n_generations
 mean_fitness = [None] * n_generations
 max_fitness = [None] * n_generations
+
 for i in range(n_generations):
   pop.evaluate(env)
   min_fitness[i] = np.min([animat.fitness for animat in pop.animats])
