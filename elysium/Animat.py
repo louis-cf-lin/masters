@@ -4,9 +4,6 @@ from globals import START_Y, CTRL1_X, CTRL1_Y, CTRL2_X, CTRL2_Y, END_Y, O, S, BA
 from utils import sigmoid
 from Env import EnvObjectTypes, Env
 
-np.set_printoptions(precision=5)
-np.random.seed(1)
-
 class Sides(Enum):
   """
   Sides of an animat
@@ -126,7 +123,7 @@ def find_nearest(animat, env):
 def get_input(obj_x, obj_y, sens_x, sens_y, sens_orient):
 
   # larger falloff means farther sight
-  falloff = 1
+  falloff = 0.2
   # sensor to object vector
   s2o = [obj_x - sens_x, 
         obj_y - sens_y]
@@ -269,10 +266,11 @@ class Animat:
     if sum(self.batteries) <= 0:
       self.alive = False
 
-  def plot(self, show_now=True):
-    plt.gca().add_patch(plt.Circle((self.x, self.y), self.RADIUS, color='black', fill=False, alpha=0.1))
-    # plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[0]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[0]), color='red', head_width=1, head_length=1)
-    # plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[1]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[1]), color='red', head_width=1, head_length=1)
+  def plot(self, show_now=True, color='black', alpha=0.1, arrows=False):
+    plt.gca().add_patch(plt.Circle((self.x, self.y), self.RADIUS, color=color, fill=False, alpha=alpha))
+    if arrows:
+      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[0]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[0]), color='red', head_width=1, head_length=1)
+      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[1]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[1]), color='red', head_width=1, head_length=1)
     if show_now:
       plt.show()
   
@@ -282,66 +280,73 @@ class Animat:
         print(str(link).replace('\n', ''))
 
 
+def test(protocol):
+  if protocol == 'link':
+    link = Link([1, 0.33, 0, 0.66, 1, 0, 0, 0, 0])
+    link.plot()
+    link = Link([1, 0.33, 0, 0.66, 0, 1, 0, 0, 0])
+    link.plot()
+    link = Link([0, 0.5, 0.5, 1, 1, 0, 0, 0, 0])
+    link.plot()
+  elif protocol == 'genes':
+    animat = Animat()
+    animat.print('genes')
+    animat.plot()
+  elif protocol == 'trial':
+    plt.figure(figsize=(8,8))
+    plt.xlim(0, Env.MAX_X)
+    plt.ylim(0, Env.MAX_Y)
+    env = Env()
+    animat = Animat()
+    x = [None] * Animat.MAX_LIFE
+    y = [None] * Animat.MAX_LIFE
+    theta = [None] * Animat.MAX_LIFE
+    left_food = [None] * Animat.MAX_LIFE
+    left_water = [None] * Animat.MAX_LIFE
+    left_trap = [None] * Animat.MAX_LIFE
+    right_food = [None] * Animat.MAX_LIFE
+    right_water = [None] * Animat.MAX_LIFE
+    right_trap = [None] * Animat.MAX_LIFE
+    animat.plot(False, 'red', 1, True)
+    for i in range(50):
+      left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i] = animat.prepare(env)
+      animat.update()
+      animat.plot(False)
+      if not animat.alive:
+        break
+    animat.plot(False, 'green', 1, True)
+    env.plot(False)
+
+    fig, axs = plt.subplots(2)
+    axs[0].set_title('Left')
+    axs[0].plot(left_food, color='g')
+    axs[0].plot(left_water, color='b')
+    axs[0].plot(left_trap, color='r')
+    axs[1].set_title('Right')
+    axs[1].plot(right_food, color='g')
+    axs[1].plot(right_water, color='b')
+    axs[1].plot(right_trap, color='r')
+    plt.show()
+  elif protocol == 'heatmap':
+    fig, ax = plt.subplots()
+    x = 25
+    y = 25
+    theta = math.pi/4
+    values = np.zeros((200,200))
+    for i in range(200):
+      for j in range(200):
+        values[i][j] = get_input(i, j, x, y, theta)
+    ax.arrow(x, y, 5*math.cos(theta), 5*math.sin(theta), color='red', head_width=1, head_length=1)
+    im = ax.imshow(values)
+    ax.invert_yaxis()
+    fig.colorbar(im)
+    plt.show()
+
+
 if __name__ == '__main__':
 
-  # # testing links
-  # link = Link([1, 0.33, 0, 0.66, 1, 0, 0, 0, 0])
-  # link.plot()
-  # link = Link([1, 0.33, 0, 0.66, 0, 1, 0, 0, 0])
-  # link.plot()
-  # link = Link([0, 0.5, 0.5, 1, 1, 0, 0, 0, 0])
-  # link.plot()
+  np.set_printoptions(precision=5)
+  np.random.seed(1)
 
+  test('trial')
 
-  # ### TESTING ANIMATS ###
-  # animat = Animat()
-  # animat.print('genes')
-  # animat.plot()
-
-  # plt.figure(figsize=(8,8))
-  # plt.xlim(0, Env.MAX_X)
-  # plt.ylim(0, Env.MAX_Y)
-  # env = Env()
-  # animat = Animat()
-  # x = [None] * Animat.MAX_LIFE
-  # y = [None] * Animat.MAX_LIFE
-  # theta = [None] * Animat.MAX_LIFE
-  # left_food = [None] * Animat.MAX_LIFE
-  # left_water = [None] * Animat.MAX_LIFE
-  # left_trap = [None] * Animat.MAX_LIFE
-  # right_food = [None] * Animat.MAX_LIFE
-  # right_water = [None] * Animat.MAX_LIFE
-  # right_trap = [None] * Animat.MAX_LIFE
-  # for i in range(Animat.MAX_LIFE):
-  #   left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i] = animat.prepare(env)
-  #   animat.update()
-  #   animat.plot(False)
-  #   if not animat.alive:
-  #     break
-  # env.plot(False)
-
-  # fig, axs = plt.subplots(2)
-  # axs[0].set_title('Left')
-  # axs[0].plot(left_food, color='g')
-  # axs[0].plot(left_water, color='b')
-  # axs[0].plot(left_trap, color='r')
-  # axs[1].set_title('Right')
-  # axs[1].plot(right_food, color='g')
-  # axs[1].plot(right_water, color='b')
-  # axs[1].plot(right_trap, color='r')
-  # plt.show()
-
-  ### HEATMAP ###
-
-  fig, ax = plt.subplots()
-  x = 25
-  y = 25
-  theta = math.pi/4
-  values = np.zeros((200,200))
-  for i in range(200):
-    for j in range(200):
-      values[i][j] = get_input(i, j, x, y, theta)
-  ax.arrow(x, y, 5*math.cos(theta), 5*math.sin(theta), color='red', head_width=1, head_length=1)
-  im = ax.imshow(values)
-  fig.colorbar(im)
-  plt.show()
