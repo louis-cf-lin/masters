@@ -87,7 +87,7 @@ class Link:
       Left and right battery levels
     """
     out = np.interp(input, self.ctrl_x, self.ctrl_y)
-    B = batteries[self.bat_side]
+    B = batteries[self.bat_side] / Animat.MAX_BATTERY
     out = out + B * self.O # offset (-1,1)
     out = out + out * (B * 2.0 - 1.0) * self.S # multiply (-1,1), i.e. double or cancel
     out = max(min(out, 1.0), -1.0)
@@ -123,7 +123,7 @@ def find_nearest(animat, env):
 def get_input(obj_x, obj_y, sens_x, sens_y, sens_orient):
 
   # larger falloff means farther sight
-  falloff = 0.2
+  falloff = 0.25
   # sensor to object vector
   s2o = [obj_x - sens_x, 
         obj_y - sens_y]
@@ -232,12 +232,11 @@ class Animat:
         obj_y = self.nearest[type.value].y
         input = get_input(obj_x, obj_y, sens_x, sens_y, sens_orient) # (0,1)
         plotting_values[side.value][type.value] = input
-        if side.value == 0 and type.value == 0:
-          print(plotting_values[side.value][type.value]) # left food
         for link in self.links[type.value]:
           sum += link.get_output(input, self.batteries)
       # set motor state
-      self.motor_states[side.value] = sum / 3 # (-9,9) => (-3,3)
+      # self.motor_states[side.value] = sum / 3 # (-9,9) => (-3,3)
+      self.motor_states[side.value] = sum * 10
 
     # calculate derivs
     mag = (self.motor_states[Sides.LEFT.value] + self.motor_states[Sides.RIGHT.value]) / 2
@@ -308,7 +307,7 @@ def test(protocol):
     right_water = [None] * Animat.MAX_LIFE
     right_trap = [None] * Animat.MAX_LIFE
     animat.plot(False, 'red', 1, True)
-    for i in range(50):
+    for i in range(Animat.MAX_LIFE):
       left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i] = animat.prepare(env)
       animat.update()
       animat.plot(False)
@@ -341,7 +340,6 @@ def test(protocol):
     ax.invert_yaxis()
     fig.colorbar(im)
     plt.show()
-
 
 if __name__ == '__main__':
 
