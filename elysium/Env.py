@@ -100,23 +100,24 @@ class Env:
   def __init__(self):
     self.objects = [[EnvObject(str(type.name)) for _ in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
   
-  def plot(self, show_immediately = True):
+  def plot(self, show_now = True):
     """Plots the environment
 
     Parameters
     ----------
-    show_immediately : bool, optional
+    show_now : bool, optional
       Render the plot immediately
     """
-    colors = ['g', 'b', 'r']    
-    plt.figure(figsize=(8,8))
+    colors = ['g', 'b', 'r']
+    markers = ['s', 'o', 'x']
+    if show_now:
+      plt.figure(figsize=(8,8))
+      plt.xlim(0, Env.MAX_X)
+      plt.ylim(0, Env.MAX_Y)
     for type in EnvObjectTypes:
       for object in self.objects[type.value]:
-        circle = plt.Circle((object.x, object.y), EnvObject.radius, color=colors[type.value], label=type.name, fill=False)
-        plt.gca().add_patch(circle)
-    plt.xlim(0, Env.MAX_X)
-    plt.ylim(0, Env.MAX_Y)
-    if show_immediately:
+        plt.plot(object.x, object.y, color=colors[type.value], marker=markers[type.value])
+    if show_now:
       plt.show()
 
 
