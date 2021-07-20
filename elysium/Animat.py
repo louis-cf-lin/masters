@@ -141,7 +141,7 @@ def get_input(obj_x, obj_y, sens_x, sens_y, sens_orient):
   sens_uv = [math.cos(sens_orient),
               math.sin(sens_orient)]
   # positive component of sensor to object projection on sensor direction
-  input = omni * s2o[0]*sens_uv[0] + s2o[1]*sens_uv[1] # (-1,1)
+  input = omni * max(0.0, s2o[0]*sens_uv[0] + s2o[1]*sens_uv[1]) # (-1,1)
 
   return input
 
@@ -235,6 +235,8 @@ class Animat:
         obj_y = self.nearest[type.value].y
         input = get_input(obj_x, obj_y, sens_x, sens_y, sens_orient) # (0,1)
         plotting_values[side.value][type.value] = input
+        if side.value == 0 and type.value == 0:
+          print(plotting_values[side.value][type.value]) # left food
         for link in self.links[type.value]:
           sum += link.get_output(input, self.batteries)
       # set motor state
@@ -291,54 +293,55 @@ if __name__ == '__main__':
   # link.plot()
 
 
-  # # testing animats
+  # ### TESTING ANIMATS ###
   # animat = Animat()
   # animat.print('genes')
   # animat.plot()
 
-  plt.figure(figsize=(8,8))
-  plt.xlim(0, Env.MAX_X)
-  plt.ylim(0, Env.MAX_Y)
-  env = Env()
-  animat = Animat()
-  x = [None] * Animat.MAX_LIFE
-  y = [None] * Animat.MAX_LIFE
-  theta = [None] * Animat.MAX_LIFE
-  left_food = [None] * Animat.MAX_LIFE
-  left_water = [None] * Animat.MAX_LIFE
-  left_trap = [None] * Animat.MAX_LIFE
-  right_food = [None] * Animat.MAX_LIFE
-  right_water = [None] * Animat.MAX_LIFE
-  right_trap = [None] * Animat.MAX_LIFE
-  for i in range(Animat.MAX_LIFE):
-    print(i)
-    left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i] = animat.prepare(env)
-    animat.update()
-    animat.plot(False)
-    if not animat.alive:
-      break
-  env.plot(False)
+  # plt.figure(figsize=(8,8))
+  # plt.xlim(0, Env.MAX_X)
+  # plt.ylim(0, Env.MAX_Y)
+  # env = Env()
+  # animat = Animat()
+  # x = [None] * Animat.MAX_LIFE
+  # y = [None] * Animat.MAX_LIFE
+  # theta = [None] * Animat.MAX_LIFE
+  # left_food = [None] * Animat.MAX_LIFE
+  # left_water = [None] * Animat.MAX_LIFE
+  # left_trap = [None] * Animat.MAX_LIFE
+  # right_food = [None] * Animat.MAX_LIFE
+  # right_water = [None] * Animat.MAX_LIFE
+  # right_trap = [None] * Animat.MAX_LIFE
+  # for i in range(Animat.MAX_LIFE):
+  #   left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i] = animat.prepare(env)
+  #   animat.update()
+  #   animat.plot(False)
+  #   if not animat.alive:
+  #     break
+  # env.plot(False)
 
-  fig, axs = plt.subplots(2)
-  axs[0].set_title('Left')
-  axs[0].plot(left_food, color='g')
-  axs[0].plot(left_water, color='b')
-  axs[0].plot(left_trap, color='r')
-  axs[1].set_title('Right')
-  axs[1].plot(right_food, color='g')
-  axs[1].plot(right_water, color='b')
-  axs[1].plot(right_trap, color='r')
-  plt.show()
-
-  # fig, ax = plt.subplots()
-  # x = 25
-  # y = 25
-  # theta = math.pi/4
-  # values = np.zeros((200,200))
-  # for i in range(200):
-  #   for j in range(200):
-  #     values[i][j] = get_input(i, j, x, y, theta)
-  # ax.arrow(x, y, 5*math.cos(theta), 5*math.sin(theta), color='red', head_width=1, head_length=1)
-  # im = ax.imshow(values)
-  # fig.colorbar(im)
+  # fig, axs = plt.subplots(2)
+  # axs[0].set_title('Left')
+  # axs[0].plot(left_food, color='g')
+  # axs[0].plot(left_water, color='b')
+  # axs[0].plot(left_trap, color='r')
+  # axs[1].set_title('Right')
+  # axs[1].plot(right_food, color='g')
+  # axs[1].plot(right_water, color='b')
+  # axs[1].plot(right_trap, color='r')
   # plt.show()
+
+  ### HEATMAP ###
+
+  fig, ax = plt.subplots()
+  x = 25
+  y = 25
+  theta = math.pi/4
+  values = np.zeros((200,200))
+  for i in range(200):
+    for j in range(200):
+      values[i][j] = get_input(i, j, x, y, theta)
+  ax.arrow(x, y, 5*math.cos(theta), 5*math.sin(theta), color='red', head_width=1, head_length=1)
+  im = ax.imshow(values)
+  fig.colorbar(im)
+  plt.show()
