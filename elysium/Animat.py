@@ -247,23 +247,29 @@ class Animat:
     return plotting_values[0][0], plotting_values[0][1], plotting_values[0][2], plotting_values[1][0], plotting_values[1][1], plotting_values[1][2] 
   
   def update(self):
-    self.x += self.dx
-    self.y += self.dy
-    self.theta += self.dtheta
-    self.batteries = [battery - 1 for battery in self.batteries]
-
+    encountered = None
     for type in EnvObjectTypes:
       if math.sqrt(self.dsq[type.value]) <= Animat.RADIUS:
         if type.name == 'FOOD' or type.name == 'WATER':
           self.batteries[type.value] = Animat.MAX_BATTERY
+          encountered = [self.nearest[type.value].x, self.nearest[type.value].y, type.value]
           self.nearest[type.value].reset()
         else:
           self.alive = False
+          return encountered
+
+    if sum(self.batteries) <= 0:
+      self.alive = False
+      return encountered
+
+    self.x += self.dx
+    self.y += self.dy
+    self.theta += self.dtheta
+    self.batteries = [battery - 1 for battery in self.batteries]
     
     self.fitness += sum(self.batteries)
     
-    if sum(self.batteries) <= 0:
-      self.alive = False
+    return encountered
 
   def plot(self, show_now=True, color='black', alpha=0.1, arrows=False):
     plt.gca().add_patch(plt.Circle((self.x, self.y), self.RADIUS, color=color, fill=False, alpha=alpha))
@@ -291,41 +297,6 @@ def test(protocol):
     animat = Animat()
     animat.print('genes')
     animat.plot()
-  elif protocol == 'trial':
-    plt.figure(figsize=(8,8))
-    plt.xlim(0, Env.MAX_X)
-    plt.ylim(0, Env.MAX_Y)
-    env = Env()
-    animat = Animat()
-    x = [None] * Animat.MAX_LIFE
-    y = [None] * Animat.MAX_LIFE
-    theta = [None] * Animat.MAX_LIFE
-    left_food = [None] * Animat.MAX_LIFE
-    left_water = [None] * Animat.MAX_LIFE
-    left_trap = [None] * Animat.MAX_LIFE
-    right_food = [None] * Animat.MAX_LIFE
-    right_water = [None] * Animat.MAX_LIFE
-    right_trap = [None] * Animat.MAX_LIFE
-    animat.plot(False, 'red', 1, True)
-    for i in range(Animat.MAX_LIFE):
-      left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i] = animat.prepare(env)
-      animat.update()
-      animat.plot(False)
-      if not animat.alive:
-        break
-    animat.plot(False, 'green', 1, True)
-    env.plot(False)
-
-    fig, axs = plt.subplots(2)
-    axs[0].set_title('Left')
-    axs[0].plot(left_food, color='g')
-    axs[0].plot(left_water, color='b')
-    axs[0].plot(left_trap, color='r')
-    axs[1].set_title('Right')
-    axs[1].plot(right_food, color='g')
-    axs[1].plot(right_water, color='b')
-    axs[1].plot(right_trap, color='r')
-    plt.show()
   elif protocol == 'heatmap':
     fig, ax = plt.subplots()
     x = 25
@@ -341,10 +312,61 @@ def test(protocol):
     fig.colorbar(im)
     plt.show()
 
+
+def test_animat_trial(genome=None, env=None):
+
+  if genome is None:
+    animat = Animat()
+  else:
+    animat = Animat(genome)
+
+  if env is None:
+    env = Env()
+  
+  plt.figure(figsize=(6,6))
+  # plt.xlim(0, Env.MAX_X)
+  # plt.ylim(0, Env.MAX_Y)
+  x = [None] * Animat.MAX_LIFE
+  y = [None] * Animat.MAX_LIFE
+  left_food = [None] * Animat.MAX_LIFE
+  left_water = [None] * Animat.MAX_LIFE
+  left_trap = [None] * Animat.MAX_LIFE
+  right_food = [None] * Animat.MAX_LIFE
+  right_water = [None] * Animat.MAX_LIFE
+  right_trap = [None] * Animat.MAX_LIFE
+  animat.plot(False, 'red', 1, True)
+  for i in range(Animat.MAX_LIFE):
+    left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i] = animat.prepare(env)
+    encountered = animat.update()
+    if not animat.alive:
+      break
+    if encountered:
+      colors = ['g', 'b']
+      markers = ['s', 'o']
+      plt.plot(encountered[0], encountered[1], color=colors[encountered[2]], marker=markers[encountered[2]], alpha=0.25)
+    x[i] = animat.x
+    y[i] = animat.y
+    animat.plot(False)
+  plt.plot(x, y, color='black', alpha=0.25)
+  animat.plot(False, 'green', 1, True)
+  env.plot(False)
+
+  fig, axs = plt.subplots(2)
+  axs[0].set_title('Left')
+  axs[0].plot(left_food, color='g')
+  axs[0].plot(left_water, color='b')
+  axs[0].plot(left_trap, color='r')
+  axs[1].set_title('Right')
+  axs[1].plot(right_food, color='g')
+  axs[1].plot(right_water, color='b')
+  axs[1].plot(right_trap, color='r')
+  plt.show()
+
 if __name__ == '__main__':
 
   np.set_printoptions(precision=5)
   np.random.seed(1)
 
-  test('trial')
+  # test('heatmap')
+  test_animat_trial()
 
