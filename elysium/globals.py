@@ -12,5 +12,3 @@ L_SGMD = 9
 R_SGMD = 10
 
 n_generations = 10
-
-ANIMAT_RADIUS = 5

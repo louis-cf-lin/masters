@@ -138,7 +138,7 @@ def get_input(obj_x, obj_y, sens_x, sens_y, sens_orient):
   sens_uv = [math.cos(sens_orient),
               math.sin(sens_orient)]
   # positive component of sensor to object projection on sensor direction
-  input = omni * max(0.0, s2o[0]*sens_uv[0] + s2o[1]*sens_uv[1]) # (-1,1)
+  input = omni * max(0.0, s2o[0]*sens_uv[0] + s2o[1]*sens_uv[1]) # (0,1)
 
   return input
 
@@ -178,7 +178,7 @@ class Animat:
   N_LINKS = len(EnvObjectTypes) * Link.N_LINKS_PER_TYPE
   MAX_BATTERY = 200
   MAX_LIFE = 800
-  RADIUS = 5
+  RADIUS = 0.025
   SENSOR_ANGLES = [math.pi/4, -math.pi/4]
 
   def __init__(self, genome=None, thresholds=None):
@@ -205,8 +205,8 @@ class Animat:
     # self.y = np.random.randint(Env.MAX_Y+1)
     # self.theta = np.random.rand() * 2*math.pi
     #  TODO set these back
-    self.x = 100
-    self.y = 100
+    self.x = 0.5
+    self.y = 0.5
     self.theta = 0
 
     self.batteries = [Animat.MAX_BATTERY for _ in Sides]
@@ -235,8 +235,7 @@ class Animat:
         for link in self.links[type.value]:
           sum += link.get_output(input, self.batteries)
       # set motor state
-      # self.motor_states[side.value] = sum / 3 # (-9,9) => (-3,3)
-      self.motor_states[side.value] = sum * 10
+      self.motor_states[side.value] = (sum - 4.5) / 20 # negative motor states allow backwards travel
 
     # calculate derivs
     mag = (self.motor_states[Sides.LEFT.value] + self.motor_states[Sides.RIGHT.value]) / 2
@@ -253,7 +252,9 @@ class Animat:
         if type.name == 'FOOD' or type.name == 'WATER':
           self.batteries[type.value] = Animat.MAX_BATTERY
           encountered = [self.nearest[type.value].x, self.nearest[type.value].y, type.value]
-          self.nearest[type.value].reset()
+          # TODO set this back
+          # self.nearest[type.value].reset()
+          self.nearest[type.value].alternate([[0.25, 0.25], [0.75, 0.75]])
         else:
           self.alive = False
           return encountered
@@ -274,8 +275,8 @@ class Animat:
   def plot(self, show_now=True, color='black', alpha=0.1, arrows=False):
     plt.gca().add_patch(plt.Circle((self.x, self.y), self.RADIUS, color=color, fill=False, alpha=alpha))
     if arrows:
-      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[0]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[0]), color='red', head_width=1, head_length=1)
-      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[1]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[1]), color='red', head_width=1, head_length=1)
+      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[0]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[0]), color='red', head_width=0.1, head_length=0.1)
+      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[1]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[1]), color='red', head_width=0.1, head_length=0.1)
     if show_now:
       plt.show()
   
@@ -299,8 +300,8 @@ def test(protocol):
     animat.plot()
   elif protocol == 'heatmap':
     fig, ax = plt.subplots()
-    x = 25
-    y = 25
+    x = 0.25
+    y = 0.25
     theta = math.pi/4
     values = np.zeros((200,200))
     for i in range(200):

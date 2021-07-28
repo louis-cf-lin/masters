@@ -51,7 +51,7 @@ if __name__ == '__main__':
   env = Env()
   pop = Population()
   results = [None] * GENS
-  for gen in range(GENS):
+  for gen in range(10):
     results[gen] = pop.eval(env)
     pop.evolve()
 

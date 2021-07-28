@@ -1,6 +1,5 @@
 import math, numpy as np, matplotlib.pyplot as plt
 from enum import Enum
-from globals import ANIMAT_RADIUS
 
 class EnvObjectTypes(Enum):
   """
@@ -19,8 +18,9 @@ class EnvObjectTypes(Enum):
   """
 
   FOOD = 0
-  WATER = 1
-  TRAP = 2
+  # TODO add back
+  # WATER = 1
+  # TRAP = 2
 
 class EnvObject:
   """
@@ -50,9 +50,9 @@ class EnvObject:
     Prints object attributes in human-readable format
   """
 
-  radius = 16
+  radius = 0.08
 
-  def __init__(self, type):
+  def __init__(self, type, loc = None):
     """
     Parameters
     ----------
@@ -60,8 +60,13 @@ class EnvObject:
       object type
     """
     self.type = type
-    self.x = np.random.randint(Env.MAX_X+1) # (0,200)
-    self.y = np.random.randint(Env.MAX_Y+1)
+
+    if loc is None:
+      self.x = np.random.randint(Env.MAX_X+1) # (0,200)
+      self.y = np.random.randint(Env.MAX_Y+1)
+    else:
+      self.x = loc[0]
+      self.y = loc[1]
     self.dist_from_animat_sq = None
   
   def reset(self):
@@ -70,6 +75,17 @@ class EnvObject:
     self.x = np.random.randint(Env.MAX_X+1)
     self.y = np.random.randint(Env.MAX_Y+1)
     self.dist_from_animat_sq = None
+  
+
+  def alternate(self, locs):
+    """Toggles the object between two locations
+    """
+    if self.x == locs[0][0]:
+      self.x = locs[1][0]
+      self.y = locs[1][1]
+    else:
+      self.x = locs[0][0]
+      self.y = locs[0][1]
   
   def print(self):
     """Prints object attributes in human-readable format
@@ -94,11 +110,13 @@ class Env:
   get_min_dist(animat, plot=False)
     TODO
   """
-  MAX_X = 200
-  MAX_Y = 200
-  N_OBJECTS = [3, 3, 9]
+  MAX_X = 1
+  MAX_Y = 1
+  # TODO change back
+  N_OBJECTS = [1, 0, 0]
   def __init__(self):
-    self.objects = [[EnvObject(str(type.name)) for _ in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
+    # TODO change back
+    self.objects = [[EnvObject(str(type.name), [0.25, 0.25]) for _ in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
   
   def plot(self, show_now = True):
     """Plots the environment
