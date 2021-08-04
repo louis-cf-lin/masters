@@ -1,8 +1,10 @@
 import numpy as np
-from animat import Animat, Obj
+from animat import Animat
+from obj import Obj
 from controller import Controller
 from sides import Sides
 from pylab import *
+from evolve import evolve
 
 def test_directional_sensors():
   a = Animat()
@@ -106,5 +108,7 @@ if __name__ == '__main__':
 
   # test_animat_no_controller()
 
-  test_link_piecewise()
+  # test_link_piecewise()
+
+  evolve()
 

@@ -1,6 +1,7 @@
 import numpy as np, os
 from utils import is_near_any_objs_or_animat
-from animat import Obj, Animat
+from animat import Animat
+from obj import Obj
 from controller import Controller, ObjTypes
 from multiprocessing import Pool
 from plotting import plot_state_history, fitness_plots, plot_population_genepool
@@ -231,6 +232,3 @@ def evolve() :
     if generation_index % DRAW_EVERY_NTH_GENERATION == 0 :
       fitness_plots(savepath, pop_fit_history)
       plot_population_genepool(savepath, pop)
-
-if __name__ == '__main__' :
-  evolve()
