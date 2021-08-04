@@ -1,4 +1,4 @@
-import numpy as np, matplotlib.pyplot as plt, copy
+import numpy as np, matplotlib.pyplot as plt, copy, pickle
 from Env import Env
 from Population import Population
 from Animat import Animat, test_animat_trial
@@ -47,11 +47,12 @@ if __name__ == '__main__':
   #   |  |  |  next   
   #   |     
 
-  GENS = 100
+  GENS = 2
+
   env = Env()
   pop = Population()
   results = [None] * GENS
-  for gen in range(10):
+  for gen in range(GENS):
     results[gen] = pop.eval(env)
     pop.evolve()
 
@@ -65,3 +66,6 @@ if __name__ == '__main__':
       best = animat
 
   test_animat_trial(best.genome, env)
+
+  with open('best.pkle', 'wb') as f:
+    pickle.dump([best], f)

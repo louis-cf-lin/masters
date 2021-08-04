@@ -1,4 +1,4 @@
-import math, numpy as np, matplotlib.pyplot as plt
+import math, numpy as np, matplotlib.pyplot as plt, random
 from enum import Enum
 
 class EnvObjectTypes(Enum):
@@ -18,9 +18,8 @@ class EnvObjectTypes(Enum):
   """
 
   FOOD = 0
-  # TODO add back
-  # WATER = 1
-  # TRAP = 2
+  WATER = 1
+  TRAP = 2
 
 class EnvObject:
   """
@@ -62,8 +61,8 @@ class EnvObject:
     self.type = type
 
     if loc is None:
-      self.x = np.random.randint(Env.MAX_X+1) # (0,200)
-      self.y = np.random.randint(Env.MAX_Y+1)
+      self.x = random.random()
+      self.y = random.random()
     else:
       self.x = loc[0]
       self.y = loc[1]
@@ -72,8 +71,8 @@ class EnvObject:
   def reset(self):
     """Moves the object to a random location in the environment
     """
-    self.x = np.random.randint(Env.MAX_X+1)
-    self.y = np.random.randint(Env.MAX_Y+1)
+    self.x = random.random()
+    self.y = random.random()
     self.dist_from_animat_sq = None
   
 
@@ -112,11 +111,9 @@ class Env:
   """
   MAX_X = 1
   MAX_Y = 1
-  # TODO change back
-  N_OBJECTS = [1, 0, 0]
+  N_OBJECTS = [1, 1, 3]
   def __init__(self):
-    # TODO change back
-    self.objects = [[EnvObject(str(type.name), [0.25, 0.25]) for _ in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
+    self.objects = [[EnvObject(str(type.name)) for _ in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
   
   def plot(self, show_now = True):
     """Plots the environment

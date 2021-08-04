@@ -21,8 +21,8 @@ class Population:
         if not animat.alive:
           break
       sum += animat.fitness
-    print(sum)
-    return sum
+    print(sum / Population.SIZE)
+    return sum / Population.SIZE
 
   def evolve(self):
     genomes = [copy.deepcopy(animat.genome) for animat in self.animats]

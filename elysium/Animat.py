@@ -201,10 +201,9 @@ class Animat:
     self.dy = None
     self.dtheta = None
 
-    # self.x = np.random.randint(Env.MAX_X+1) # (0,200)
-    # self.y = np.random.randint(Env.MAX_Y+1)
+    # self.x = random.random()
+    # self.y = random.random()
     # self.theta = np.random.rand() * 2*math.pi
-    #  TODO set these back
     self.x = 0.5
     self.y = 0.5
     self.theta = 0
@@ -235,7 +234,7 @@ class Animat:
         for link in self.links[type.value]:
           sum += link.get_output(input, self.batteries)
       # set motor state
-      self.motor_states[side.value] = (sum - 4.5) / 20 # negative motor states allow backwards travel
+      self.motor_states[side.value] = sum / 50 # negative motor states allow backwards travel
 
     # calculate derivs
     mag = (self.motor_states[Sides.LEFT.value] + self.motor_states[Sides.RIGHT.value]) / 2
@@ -243,7 +242,7 @@ class Animat:
     self.dy = mag * math.sin(self.theta)
     self.dtheta = (self.motor_states[Sides.LEFT.value] + self.motor_states[Sides.RIGHT.value]) / (Animat.RADIUS*2)
 
-    return plotting_values[0][0], plotting_values[0][1], plotting_values[0][2], plotting_values[1][0], plotting_values[1][1], plotting_values[1][2] 
+    return plotting_values[0][0], plotting_values[0][1], plotting_values[0][2], plotting_values[1][0], plotting_values[1][1], plotting_values[1][2], self.motor_states[0], self.motor_states[1]
   
   def update(self):
     encountered = None
@@ -252,9 +251,7 @@ class Animat:
         if type.name == 'FOOD' or type.name == 'WATER':
           self.batteries[type.value] = Animat.MAX_BATTERY
           encountered = [self.nearest[type.value].x, self.nearest[type.value].y, type.value]
-          # TODO set this back
-          # self.nearest[type.value].reset()
-          self.nearest[type.value].alternate([[0.25, 0.25], [0.75, 0.75]])
+          self.nearest[type.value].reset()
         else:
           self.alive = False
           return encountered
@@ -275,8 +272,8 @@ class Animat:
   def plot(self, show_now=True, color='black', alpha=0.1, arrows=False):
     plt.gca().add_patch(plt.Circle((self.x, self.y), self.RADIUS, color=color, fill=False, alpha=alpha))
     if arrows:
-      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[0]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[0]), color='red', head_width=0.1, head_length=0.1)
-      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[1]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[1]), color='red', head_width=0.1, head_length=0.1)
+      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[0]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[0]), color='red', head_width=0.01, head_length=0.01)
+      plt.arrow(self.x, self.y, self.RADIUS*math.cos(self.theta+self.SENSOR_ANGLES[1]), self.RADIUS*math.sin(self.theta+self.SENSOR_ANGLES[1]), color='red', head_width=0.01, head_length=0.01)
     if show_now:
       plt.show()
   
@@ -325,8 +322,8 @@ def test_animat_trial(genome=None, env=None):
     env = Env()
   
   plt.figure(figsize=(6,6))
-  # plt.xlim(0, Env.MAX_X)
-  # plt.ylim(0, Env.MAX_Y)
+  plt.xlim(0, Env.MAX_X)
+  plt.ylim(0, Env.MAX_Y)
   x = [None] * Animat.MAX_LIFE
   y = [None] * Animat.MAX_LIFE
   left_food = [None] * Animat.MAX_LIFE
@@ -335,9 +332,11 @@ def test_animat_trial(genome=None, env=None):
   right_food = [None] * Animat.MAX_LIFE
   right_water = [None] * Animat.MAX_LIFE
   right_trap = [None] * Animat.MAX_LIFE
+  left_sensor = [None] * Animat.MAX_LIFE
+  right_sensor = [None] * Animat.MAX_LIFE
   animat.plot(False, 'red', 1, True)
   for i in range(Animat.MAX_LIFE):
-    left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i] = animat.prepare(env)
+    left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i], left_sensor[i], right_sensor[i] = animat.prepare(env)
     encountered = animat.update()
     if not animat.alive:
       break
@@ -353,14 +352,20 @@ def test_animat_trial(genome=None, env=None):
   env.plot(False)
 
   fig, axs = plt.subplots(2)
-  axs[0].set_title('Left')
+  axs[0].set_title('Left sensors')
   axs[0].plot(left_food, color='g')
   axs[0].plot(left_water, color='b')
   axs[0].plot(left_trap, color='r')
-  axs[1].set_title('Right')
+  axs[1].set_title('Right sensors')
   axs[1].plot(right_food, color='g')
   axs[1].plot(right_water, color='b')
   axs[1].plot(right_trap, color='r')
+  fig2, axs2 = plt.subplots(2)
+  axs2[0].set_title('Left motor states')
+  axs2[0].plot(left_food, color='g')
+  axs2[1].set_title('Right motor states')
+  axs2[1].plot(right_food, color='g')
+  
   plt.show()
 
 if __name__ == '__main__':
