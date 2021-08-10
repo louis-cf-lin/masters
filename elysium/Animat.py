@@ -1,4 +1,4 @@
-import math, numpy as np, matplotlib.pyplot as plt
+import math, numpy as np, matplotlib.pyplot as plt, copy
 from enum import Enum
 from globals import START_Y, CTRL1_X, CTRL1_Y, CTRL2_X, CTRL2_Y, END_Y, O, S, BAT
 from utils import sigmoid
@@ -233,15 +233,22 @@ class Animat:
     encountered = None
     for type in EnvObjectTypes:
       if self.dsq[type.value] <= Animat.RADIUS ** 2:
+        encountered = {
+                      'x': self.nearest[type.value].x,
+                      'y': self.nearest[type.value].y,
+                      'type': type.value
+                      }
         if type.name == 'FOOD' or type.name == 'WATER':
           self.batteries[type.value] = Animat.MAX_BATTERY
-          encountered = [self.nearest[type.value].x, self.nearest[type.value].y, type.value]
           self.nearest[type.value].reset()
         else:
+          print('ran into trap')
           self.alive = False
+          del self.nearest[type.value]
           return encountered
 
     if sum(self.batteries) <= 0:
+      print('no battery')
       self.alive = False
       return encountered
 
@@ -267,8 +274,8 @@ class Animat:
       if not self.alive:
         break
       if encountered:
-        colors = ['g', 'b']
-        plt.gca().add_patch(plt.Circle((encountered[0], encountered[1]), Animat.RADIUS, color=colors[encountered[2]], fill=False))
+        colors = ['g', 'b', 'r']
+        plt.gca().add_patch(plt.Circle((encountered['x'], encountered['y']), Animat.RADIUS, color=colors[encountered['type']], fill=False))
       self.plot()
     
     return left_food, left_water, left_trap, right_food, right_water, right_trap
@@ -291,7 +298,7 @@ class Animat:
     plt.show()
 
   def plot(self):
-    plt.plot(self.x, self.y, 'k,', lw=0.5, alpha=0.5)
+    plt.plot(self.x, self.y, 'ko', ms=1, alpha=0.5)
   
   def print(self, *args):
     if 'genes' in args:
@@ -330,7 +337,6 @@ def test_animat_trial(genome=None, env=None):
   plt.ylim(Env.MIN_Y, Env.MAX_Y)
 
   plt.gca().add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black', fill=False))
-  env.plot()
   
   animat.plot()
 
