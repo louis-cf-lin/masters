@@ -1,8 +1,8 @@
 import numpy as np, os
 from utils import is_near_any_objs_or_animat
 from animat import Animat
-from obj import Obj
-from controller import Controller, ObjTypes
+from obj import Obj, ObjTypes
+from controller import Controller
 from multiprocessing import Pool
 from plotting import plot_state_history, fitness_plots, plot_population_genepool
 from utils import weighted_choice

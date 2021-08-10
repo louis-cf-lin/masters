@@ -1,4 +1,5 @@
-import numpy as np, random, copy
+import numpy as np, random, copy, math
+import matplotlib.pyplot as plt
 from Animat import Animat
 
 random.seed(0)
@@ -13,15 +14,19 @@ class Population:
   
   def eval(self, env):
     sum = 0
+    max = -math.inf
+    min = math.inf
     for animat in self.animats:
       env_instance = copy.deepcopy(env)
-      for i in range(Animat.MAX_LIFE):
-        animat.prepare(env_instance)
-        animat.update()
-        if not animat.alive:
-          break
+      animat.evaluate(env_instance)
+
       sum += animat.fitness
-    print(sum / Population.SIZE)
+      if animat.fitness < min:
+        min = animat.fitness
+      elif animat.fitness > max:
+        max = animat.fitness
+    mean = sum / Population.SIZE
+    print('max:', round(max, 3), 'mean:', round(mean, 3), 'min:', round(min, 3))
     return sum / Population.SIZE
 
   def evolve(self):

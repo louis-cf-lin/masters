@@ -100,8 +100,6 @@ def test_link_piecewise():
   legend()
   show()
 
-def test_evolve_ga():
-
 
 if __name__ == '__main__':
   # test_directional_sensors()
@@ -109,6 +107,5 @@ if __name__ == '__main__':
   # test_animat_no_controller()
 
   # test_link_piecewise()
-
   evolve()
 

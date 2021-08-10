@@ -47,7 +47,7 @@ if __name__ == '__main__':
   #   |  |  |  next   
   #   |     
 
-  GENS = 2
+  GENS = 100
 
   env = Env()
   pop = Population()

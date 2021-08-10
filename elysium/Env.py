@@ -29,7 +29,7 @@ class EnvObject:
 
   Attributes
   ----------
-  radius : int
+  RADIUS : int
     size of all environments objects
   type : str
     object type
@@ -49,7 +49,7 @@ class EnvObject:
     Prints object attributes in human-readable format
   """
 
-  radius = 0.08
+  RADIUS = 0.1
 
   def __init__(self, type, loc = None):
     """
@@ -61,8 +61,8 @@ class EnvObject:
     self.type = type
 
     if loc is None:
-      self.x = random.random()
-      self.y = random.random()
+      self.x = random.random() * 2.0 - 1.0
+      self.y = random.random() * 2.0 - 1.0
     else:
       self.x = loc[0]
       self.y = loc[1]
@@ -71,8 +71,8 @@ class EnvObject:
   def reset(self):
     """Moves the object to a random location in the environment
     """
-    self.x = random.random()
-    self.y = random.random()
+    self.x = random.random() * 2.0 - 1.0
+    self.y = random.random() * 2.0 - 1.0
     self.dist_from_animat_sq = None
   
 
@@ -111,11 +111,13 @@ class Env:
   """
   MAX_X = 1
   MAX_Y = 1
+  MIN_X = -1
+  MIN_Y = -1
   N_OBJECTS = [1, 1, 3]
   def __init__(self):
     self.objects = [[EnvObject(str(type.name)) for _ in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
   
-  def plot(self, show_now = True):
+  def plot(self):
     """Plots the environment
 
     Parameters
@@ -124,16 +126,10 @@ class Env:
       Render the plot immediately
     """
     colors = ['g', 'b', 'r']
-    markers = ['s', 'o', 'x']
-    if show_now:
-      plt.figure(figsize=(8,8))
-      plt.xlim(0, Env.MAX_X)
-      plt.ylim(0, Env.MAX_Y)
     for type in EnvObjectTypes:
       for object in self.objects[type.value]:
-        plt.plot(object.x, object.y, color=colors[type.value], marker=markers[type.value])
-    if show_now:
-      plt.show()
+        plt.gca().add_patch(plt.Circle((object.x, object.y), EnvObject.RADIUS, color=colors[type.value]))
+        # plt.plot(object.x, object.y, color=colors[type.value], marker=markers[type.value])
 
 
 def test(fn):

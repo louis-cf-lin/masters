@@ -1,4 +1,10 @@
 import math, numpy as np
+from enum import IntEnum
+
+class ObjTypes(IntEnum):
+  FOOD = 0
+  WATER = 1
+  TRAP = 2
 
 class Obj(object):
   RADIUS = 0.1

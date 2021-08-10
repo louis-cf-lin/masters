@@ -1,7 +1,7 @@
 from pylab import *
 import os
-from controller import ObjTypes, Controller
-from animat import Obj
+from controller import Controller
+from obj import ObjTypes, Obj
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 DPI = 90

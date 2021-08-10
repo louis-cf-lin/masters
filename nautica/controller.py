@@ -1,44 +1,8 @@
 from pylab import *
-from enum import IntEnum
 from sides import Sides
 import numpy as np
-
-class ObjTypes(IntEnum):
-  FOOD = 0
-  WATER = 1
-  TRAP = 2
-
-class Link(object):
-  N_MID_POINTS = 2
-  N_GENES = 2 + N_MID_POINTS*2 + 3
-
-  def __init__(self):
-    pass
-
-  def set_genome(self, genome):
-    NXG = Link.N_MID_POINTS
-    NYG = Link.N_MID_POINTS + 2
-    self.xs = np.array([0.0] + sorted(genome[:NXG]) + [1.0]) # enforces order
-    self.ys = np.array(genome[NXG:NXG+NYG]) * 2.0 - 1.0 # scale to (-1,1)
-    self.bat_sens = int(genome[NXG+NYG] < 0.5) # 0 is food, 1 is water
-    self.O = genome[NXG+NYG+1] * 2.0 - 1.0 ## \in (-1,1)   
-    self.S = genome[NXG+NYG+2]             ## \in (0,1)
-
-    ## used for plotting which battery this link is sensitive to
-    self.bsense = ['F','W'][self.bat_sens]
-
-  def output(self, sens_state, bat_states):
-    out = np.interp(sens_state, self.xs, self.ys)
-    unscaled = out
-
-    b = bat_states[self.bat_sens]
-    b = max(min(b, 1.0), 0.0)
-    out = out + b * self.O * 2.0
-    out = out + out * (b * 2.0 - 1.0) * self.S
-
-    out = max(min(out, 1.0), -1.0)
-
-    return out, unscaled
+from obj import ObjTypes
+from link import Link
   
 class Controller(object):
 
@@ -147,7 +111,7 @@ class Controller(object):
           unscaled_outs.append(unscaled_out)
         plot(xs,highbat_outs,label='high battery')
         plot(xs,lowbat_outs,label='low battery')
-        plot(xs,unscaled_outs,label='high battery')
+        plot(xs,unscaled_outs,label='medium battery', color='black')
         text(1.02,-0.98,l.bsense[0],color='r')
         xlim(0,1)
         ylim(-1.05,1.05)
@@ -158,7 +122,7 @@ class Controller(object):
           else :
             title('Symmetric Ipsilateral Links')
 
-        tight_layout()
-        savefig(f'output/{file_prefix}_links.png',dpi=120)
-        close()
+    tight_layout()
+    savefig(f'output/{file_prefix}_links.png',dpi=120)
+    close()
 
