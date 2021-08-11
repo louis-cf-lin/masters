@@ -166,16 +166,11 @@ class Animat:
   RADIUS = 0.1
   SENSOR_ANGLES = [math.pi/4, -math.pi/4]
 
-  def __init__(self, genome=None, thresholds=None):
+  def __init__(self, genome=None):
     if genome is None:
       self.genome = [[np.random.rand(Link.N_GENES) for _ in range(Link.N_LINKS_PER_TYPE)] for _ in EnvObjectTypes]
     else:
       self.genome = genome
-
-    if thresholds is None:
-      self.thresholds = np.random.rand(2) * 6.0 - 3.0 # (-3,3) array of two
-    else:
-      self.thresholds = thresholds
 
     self.links = [[Link(self.genome[type.value][i]) for i in range(Link.N_LINKS_PER_TYPE)] for type in EnvObjectTypes]
 
@@ -219,7 +214,7 @@ class Animat:
         for link in self.links[type.value]:
           sum += link.get_output(reading, self.batteries)
       # set motor state
-      self.motor_states[side.value] = min(0.0, sum / 3)
+      self.motor_states[side.value] = min(1.0, sum / 3)
 
     # calculate derivs
     mag = (self.motor_states[Sides.LEFT.value] + self.motor_states[Sides.RIGHT.value]) / 2
@@ -242,13 +237,12 @@ class Animat:
           self.batteries[type.value] = Animat.MAX_BATTERY
           self.nearest[type.value].reset()
         else:
-          print('ran into trap')
           self.alive = False
-          del self.nearest[type.value]
+          self.nearest[type.value].x = None
+          self.nearest[type.value].y = None
           return encountered
 
     if sum(self.batteries) <= 0:
-      print('no battery')
       self.alive = False
       return encountered
 
@@ -261,7 +255,7 @@ class Animat:
     
     return encountered
 
-  def evaluate(self, env):
+  def evaluate(self, env, plot=True):
     left_food = [None] * Animat.MAX_LIFE
     left_water = [None] * Animat.MAX_LIFE
     left_trap = [None] * Animat.MAX_LIFE
@@ -271,12 +265,13 @@ class Animat:
     for i in range(Animat.MAX_LIFE):
       left_food[i], left_water[i], left_trap[i], right_food[i], right_water[i], right_trap[i] = self.prepare(env)
       encountered = self.update()
-      if not self.alive:
-        break
-      if encountered:
+      if plot and encountered:
         colors = ['g', 'b', 'r']
         plt.gca().add_patch(plt.Circle((encountered['x'], encountered['y']), Animat.RADIUS, color=colors[encountered['type']], fill=False))
-      self.plot()
+      if not self.alive:
+        break
+      if plot:
+        self.plot()
     
     return left_food, left_water, left_trap, right_food, right_water, right_trap
 
@@ -365,7 +360,6 @@ def test_animat_trial(genome=None, env=None):
 if __name__ == '__main__':
 
   np.set_printoptions(precision=5)
-  np.random.seed(1)
 
   # test_dir_sensor()
   test_animat_trial()

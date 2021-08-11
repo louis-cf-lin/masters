@@ -3,7 +3,7 @@ from Env import Env
 from Population import Population
 from Animat import Animat, test_animat_trial
 
-np.random.seed(0)
+np.random.seed(1)
 
 if __name__ == '__main__':
   # PSEUDO
@@ -47,17 +47,21 @@ if __name__ == '__main__':
   #   |  |  |  next   
   #   |     
 
-  GENS = 2
+  GENS = 50
 
   env = Env()
   pop = Population()
-  results = [None] * GENS
+  mean = [None] * GENS
+  max = [None] * GENS
+  min = [None] * GENS
   for gen in range(GENS):
-    results[gen] = pop.eval(env)
+    max[gen], mean[gen], min[gen] = pop.eval(env)
     pop.evolve()
 
   pop.eval(env)
-  plt.plot(results)
+  plt.plot(mean)
+  plt.plot(max)
+  plt.plot(min)
   plt.show()
 
   best = Animat()
@@ -67,5 +71,5 @@ if __name__ == '__main__':
 
   test_animat_trial(best.genome, env)
 
-  with open('best.pkle', 'wb') as f:
-    pickle.dump([best], f)
+  # with open('best.pkle', 'wb') as f:
+  #   pickle.dump([best], f)

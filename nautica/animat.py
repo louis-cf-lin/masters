@@ -64,8 +64,6 @@ class Animat(object):
     self.dy = Animat.MOTOR_SPEED * math.sin(self.a) * (self.lm + self.rm)
     self.da = Animat.MOTOR_SPEED * (self.rm - self.lm) / Animat.RADIUS
 
-    print(round(self.dx, 3), round(self.dy, 3), round(self.da, 3))
-  
   def euler_update(self, DT=0.02):
     self.x_h.append(self.x)
     self.y_h.append(self.y)

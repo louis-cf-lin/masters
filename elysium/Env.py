@@ -1,4 +1,4 @@
-import math, numpy as np, matplotlib.pyplot as plt, random
+import numpy as np, matplotlib.pyplot as plt
 from enum import Enum
 
 class EnvObjectTypes(Enum):
@@ -51,7 +51,7 @@ class EnvObject:
 
   RADIUS = 0.1
 
-  def __init__(self, type, loc = None):
+  def __init__(self, type, rstate = 0, loc = None):
     """
     Parameters
     ----------
@@ -59,10 +59,11 @@ class EnvObject:
       object type
     """
     self.type = type
+    self.rstate = np.random.RandomState(rstate)
 
     if loc is None:
-      self.x = random.random() * 2.0 - 1.0
-      self.y = random.random() * 2.0 - 1.0
+      self.x = self.rstate.random() * 2.0 - 1.0
+      self.y = self.rstate.random() * 2.0 - 1.0
     else:
       self.x = loc[0]
       self.y = loc[1]
@@ -71,8 +72,8 @@ class EnvObject:
   def reset(self):
     """Moves the object to a random location in the environment
     """
-    self.x = random.random() * 2.0 - 1.0
-    self.y = random.random() * 2.0 - 1.0
+    self.x = self.rstate.random() * 2.0 - 1.0
+    self.y = self.rstate.random() * 2.0 - 1.0
     self.dist_from_animat_sq = None
   
 
@@ -115,7 +116,8 @@ class Env:
   MIN_Y = -1
   N_OBJECTS = [1, 1, 3]
   def __init__(self):
-    self.objects = [[EnvObject(str(type.name)) for _ in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
+    self.objects = [[EnvObject(str(type.name), type.value * len(EnvObjectTypes) + i) for i in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
+
   
   def plot(self):
     """Plots the environment
@@ -129,7 +131,7 @@ class Env:
     for type in EnvObjectTypes:
       for object in self.objects[type.value]:
         plt.gca().add_patch(plt.Circle((object.x, object.y), EnvObject.RADIUS, color=colors[type.value]))
-        # plt.plot(object.x, object.y, color=colors[type.value], marker=markers[type.value])
+
 
 
 def test(fn):
