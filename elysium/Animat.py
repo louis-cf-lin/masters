@@ -181,9 +181,9 @@ class Animat:
     self.dy = None
     self.dtheta = None
 
-    # self.x = random.random()
-    # self.y = random.random()
-    # self.theta = np.random.rand() * 2*math.pi
+    # self.x = np.random.random()
+    # self.y = np.random.random()
+    # self.theta = np.random.random() * 2*math.pi
     self.x = 0
     self.y = 0
     self.theta = 0

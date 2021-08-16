@@ -44,10 +44,10 @@ if __name__ == '__main__':
   #   |  |  |  update fitness
   #   |  |   
   #   |  |  if individual is dead:
-  #   |  |  |  next   
+  #   |  |  |  next
   #   |     
 
-  GENS = 50
+  GENS = 800
 
   env = Env()
   pop = Population()
