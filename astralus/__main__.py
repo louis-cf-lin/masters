@@ -1,12 +1,11 @@
-import numpy as np, matplotlib.pyplot as plt, copy, pickle
+import numpy as np, matplotlib.pyplot as plt
 from Env import Env
 from Population import Population
-from Animat import Animat
-
-np.random.seed(0)
+from Animat import Animat, test_animat_trial
 
 if __name__ == '__main__':
-  GENS = 800
+
+  GENS = 400
 
   env = Env()
   pop = Population()
@@ -14,7 +13,7 @@ if __name__ == '__main__':
   max = [None] * GENS
   min = [None] * GENS
   for gen in range(GENS):
-    max[gen], mean[gen], min[gen] = pop.eval(env)
+    max[gen], mean[gen], min[gen] = pop.eval()
     pop.evolve()
 
   pop.eval(env)
@@ -27,5 +26,5 @@ if __name__ == '__main__':
   for animat in pop.animats:
     if animat.fitness > best.fitness:
       best = animat
-  
-  print(best.genome)
+
+  test_animat_trial(best.genome, env)

@@ -47,7 +47,7 @@ if __name__ == '__main__':
   #   |  |  |  next
   #   |     
 
-  GENS = 800
+  GENS = 400
 
   env = Env()
   pop = Population()
@@ -55,7 +55,7 @@ if __name__ == '__main__':
   max = [None] * GENS
   min = [None] * GENS
   for gen in range(GENS):
-    max[gen], mean[gen], min[gen] = pop.eval(env)
+    max[gen], mean[gen], min[gen] = pop.eval()
     pop.evolve()
 
   pop.eval(env)

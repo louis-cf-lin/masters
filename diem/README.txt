@@ -1,0 +1,3 @@
+- One chemical network per sensorimotor link
+- One food object in environment
+- Inputs are omni-directional readings from the two sensors to food object
