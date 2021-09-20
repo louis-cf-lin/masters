@@ -49,6 +49,7 @@ class Env:
 
   def __init__(self):
     self.objects = [[EnvObject(str(type.name), type.value * len(EnvObjectTypes) + i) for i in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
+    self.hist = []
 
   def update(self):
     for type in self.objects:
@@ -60,7 +61,10 @@ class Env:
     for type in EnvObjectTypes:
       for object in self.objects[type.value]:
         plt.gca().add_patch(plt.Circle((object.x, object.y), EnvObject.RADIUS, color=colors[type.value]))
-
+    for object in self.hist:
+      plt.gca().add_patch(plt.Circle((object.x, object.y), EnvObject.RADIUS, color=colors[EnvObjectTypes[object.type].value], fill=False))
+      plt.text(object.x, object.y, round(object.conc, 3))
+      
 
 if __name__ == '__main__':
   env = Env()

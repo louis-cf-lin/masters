@@ -5,7 +5,7 @@ from collections import Counter
 
 AGGREGATION = True
 
-DT = 0.5
+DT = 0.01
 MUTATION_RATE = 0.1
 DRAIN_RATE = 0.004
 
@@ -23,9 +23,9 @@ class Chemical:
 
   N_GENES = 4
 
-  INIT_POTENTIAL_MAX = 5
-  INIT_INITIAL_CONC_MAX = 5
-  INIT_DECAY_MAX = 5 # slower decay
+  INIT_POTENTIAL_MAX = 1
+  INIT_INITIAL_CONC_MAX = 1
+  INIT_DECAY_MAX = 1 # slower decay
 
   FORMULA_LEN_MAX = 4
   POTENTIAL_MAX = 7.5
@@ -141,16 +141,14 @@ class Network:
           break
       else:
         self.chemicals.append(Chemical(formula=formula))
-    self.chemicals[0].decay = NETWORK_RNG.random() * 5
-    self.chemicals[1].decay = NETWORK_RNG.random() * 5
   
     self.reactions = []
     for _ in range(Network.N_INIT_REACTIONS):
       self.new_reaction()
 
     NETWORK_RNG.shuffle(self.chemicals)
-    self.o = NETWORK_RNG.random()
-    self.s = NETWORK_RNG.random()
+    self.chemicals[0].decay = NETWORK_RNG.random() * 5
+    self.chemicals[1].decay = NETWORK_RNG.random() * 5
 
   def __eq__(self, other):
     return np.array_equal(self.chemicals, other.chemicals) and np.array_equal(self.reactions, other.reactions)
@@ -225,9 +223,6 @@ class Network:
     for chemical in self.chemicals:
       chemical.update()
       chemical.hist.append(chemical.conc)
-
-    left_out = self.chemicals[Network.OUTPUT_LEFT].conc
-    right_out = self.chemicals[Network.OUTPUT_RIGHT].conc
     
     return self.chemicals[Network.OUTPUT_LEFT].conc, self.chemicals[Network.OUTPUT_RIGHT].conc
 
@@ -243,9 +238,6 @@ class Network:
     if NETWORK_RNG.random() < MUTATION_RATE:
       i = NETWORK_RNG.choice(range(len(self.chemicals)), 2)
       self.chemicals[i[0]], self.chemicals[i[1]] = self.chemicals[i[1]], self.chemicals[i[0]]
-    if NETWORK_RNG.random() < 5 * MUTATION_RATE:
-      self.o = add_noise(self.o, 1)
-      self.s = add_noise(self.s, 1)
   
   def print_derivs(self):
     derivs = {}

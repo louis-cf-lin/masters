@@ -56,7 +56,8 @@ class Animat:
       self.controller = controller
     self.nearest = [None for _ in EnvObjectTypes]
     self.dsq = [None for _ in EnvObjectTypes]
-    self.motor_states = [None for _ in Sides]
+    self.motor_hist = [[] for _ in Sides]
+    self.sens_hist = [[[] for _ in EnvObjectTypes] for _ in Sides]
     self.dx = None
     self.dy = None
     self.dtheta = None
@@ -65,7 +66,9 @@ class Animat:
     # self.y = np.random.random()
     # self.theta = np.random.random() * 2*math.pi
     self.x = 0.25
+    self.x_hist = [self.x]
     self.y = 0.25
+    self.y_hist = [self.y]
     self.theta = math.pi / 2
 
     self.battery = Animat.MAX_BATTERY
@@ -73,15 +76,16 @@ class Animat:
     self.fitness = 0
     self.alive = True
   
-  def __eq__(self, other) :
-    return self.controller == other.controller and np.array_equal(self.nearest, other.nearest) and np.array_equal(self.dsq, other.dsq) and np.array_equal(self.motor_states, other.motor_states) and self.dx == other.dx and self.dy == other.dy and self.dtheta == other.dtheta
-  
-  def prepare(self, env):
 
-    readings = np.zeros((len(Sides), len(EnvObjectTypes)))
+  def __eq__(self, other) :
+    return self.controller == other.controller and np.array_equal(self.nearest, other.nearest) and np.array_equal(self.dsq, other.dsq) and self.dx == other.dx and self.dy == other.dy and self.dtheta == other.dtheta
+  
+
+  def prepare(self, env):
     # store closest object of each type
     find_nearest(self, env)
-
+    readings = np.zeros((len(Sides), len(EnvObjectTypes)))
+    # sensor readings
     for side in Sides:
       # sensor properties
       sens_orient = self.theta + self.SENSOR_ANGLES[side.value]
@@ -93,148 +97,112 @@ class Animat:
         obj_y = self.nearest[type.value].y
         reading = get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient)
         readings[side.value][type.value] = reading
-
+        self.sens_hist[side.value][type.value].append(reading)
+    # get chemical outputs
     left_out, right_out = self.controller.get_outputs(np.sum(readings[Sides.LEFT.value]), np.sum(readings[Sides.RIGHT.value]))
-    
     # set motor state
-    self.motor_states[Sides.LEFT.value] = min(1.0, left_out / len(EnvObjectTypes))
-    self.motor_states[Sides.RIGHT.value] = min(1.0, right_out / len(EnvObjectTypes))
-
+    left_motor_state = min(1.0, left_out / len(EnvObjectTypes))
+    right_motor_state = min(1.0, right_out / len(EnvObjectTypes))
+    self.motor_hist[Sides.LEFT.value].append(left_motor_state)
+    self.motor_hist[Sides.RIGHT.value].append(right_motor_state)
     # calculate derivs
-    mag = (self.motor_states[Sides.LEFT.value] + self.motor_states[Sides.RIGHT.value]) / 2
+    mag = (left_motor_state + right_motor_state) / 2
     self.dx = mag * math.cos(self.theta) * 0.05
     self.dy = mag * math.sin(self.theta) * 0.05
-    self.dtheta = (self.motor_states[Sides.RIGHT.value] - self.motor_states[Sides.LEFT.value]) / Animat.RADIUS * 0.05
-
-    return readings[0][0], readings[1][0], self.motor_states[Sides.LEFT.value], self.motor_states[Sides.RIGHT.value]
+    self.dtheta = (right_motor_state - left_motor_state) / Animat.RADIUS * 0.05
   
-  def update(self):
-    encountered = None
+
+  def update(self, env):
+    # update position and orientation
+    self.x += self.dx
+    self.x_hist.append(self.x)
+    self.y += self.dy
+    self.y_hist.append(self.y)
+    self.theta += self.dtheta
+    # check if encountered any objects
+    encountered = False
     for type in EnvObjectTypes:
       if self.dsq[type.value] <= Animat.RADIUS ** 2:
-        encountered = {
-                      'x': self.nearest[type.value].x,
-                      'y': self.nearest[type.value].y,
-                      'type': type.value,
-                      'conc': self.nearest[type.value].conc
-                      }
-        if type.name == 'FOOD' or type.name == 'WATER':
-          self.battery += self.nearest[type.value].conc
-          self.nearest[type.value].reset()
+        encountered = copy.deepcopy(self.nearest[type.value])
+        env.hist.append(encountered)
+        self.nearest[type.value].reset()
+        if encountered.type == 'FOOD' or encountered.type == 'WATER':
+          self.battery += encountered.conc
         else:
-          self.alive = False
-          self.nearest[type.value].x = None
-          self.nearest[type.value].y = None
-          return encountered
-
+          self.battery = 0
+    if not encountered:
+      self.battery -= Animat.DRAIN_RATE
+    # update battery and env
+    self.fitness += self.battery
+    self.battery_hist.append(self.battery)
     if self.battery <= 0:
       self.alive = False
-      return encountered
+    env.update()
 
-    self.x += self.dx
-    self.y += self.dy
-    self.theta += self.dtheta
-
-    # if self.x > Env.MAX_X or self.x < Env.MIN_X:
-    #   self.x -= self.dx
-    #   self.dx = -self.dx
-    #   self.y += self.dy
-    #   self.theta = math.atan(self.dy/self.dx)
-    # if self.y > Env.MAX_Y or self.y < Env.MIN_Y:
-    #   self.y -= self.dy
-    #   self.dy = -self.dy
-    #   self.x += self.dx
-    #   self.theta = math.atan(self.dy/self.dx)
-
-    self.battery -= Animat.DRAIN_RATE
-    
-    self.fitness += self.battery
-    
-    return encountered
 
   def evaluate(self, env, plot=True):
-    left_sensor = [None] * Animat.MAX_LIFE
-    right_sensor = [None] * Animat.MAX_LIFE
-    left_motor = [None] * Animat.MAX_LIFE
-    right_motor = [None] * Animat.MAX_LIFE
     for i in range(Animat.MAX_LIFE):
-      left_sensor[i], right_sensor[i], left_motor[i], right_motor[i] = self.prepare(env)
-      encountered = self.update()
-      env.update()
-      if plot and encountered:
-        colors = ['g', 'b', 'r']
-        plt.gca().add_patch(plt.Circle((encountered['x'], encountered['y']), Animat.RADIUS, color=colors[encountered['type']], fill=False))
-        plt.text(encountered['x'], encountered['y'], round(encountered['conc'], 3))
+      self.prepare(env)
+      self.update(env)
       if not self.alive:
         break
-      if plot:
-        self.plot()
     if (i > Animat.MAX_LIFE-1):
       print('died of old age')
-    
-    return left_sensor, right_sensor, left_motor, right_motor
-
+  
   def plot(self):
-    plt.plot(self.x, self.y, 'ko', ms=1, alpha=0.5)
+    plt.plot(self.x_hist, self.y_hist, 'ko', ms=1, alpha=0.5)
 
 
-def test_dir_sensor():
-  fig, ax = plt.subplots()
-  x = 0.25
-  y = 0.25
-  theta = math.pi/4
-  values = np.zeros((200,200))
-  for i in range(200):
-    for j in range(200):
-      values[i][j] = get_sens_reading(i, j, x, y, theta)
-  ax.arrow(x, y, 5*math.cos(theta), 5*math.sin(theta), color='red', head_width=1, head_length=1)
-  im = ax.imshow(values)
-  ax.invert_yaxis()
-  fig.colorbar(im)
-  plt.show()
-
-
-def test_animat_trial(controller=None):
+def test_animat_trial(controller=None, plot=True):
 
   if controller is None:
     animat = Animat()
   else:
     animat = Animat(controller)
-
+  
   env = Env()
   
-  plt.figure(figsize=(6,6))
-  plt.xlim(Env.MIN_X, Env.MAX_X)
-  plt.ylim(Env.MIN_Y, Env.MAX_Y)
+  if plot:
+    fig = plt.figure(constrained_layout=True, figsize=(16,8))
+    plots = fig.subfigures(1, 2)
+    ax = plots[0].subplots()
+    ax.set_aspect('equal')
+    ax.set_xlim(Env.MIN_X, Env.MAX_X)
+    ax.set_ylim(Env.MIN_Y, Env.MAX_Y)
+    ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black', fill=False))
 
+  animat.evaluate(env)
 
-  plt.gca().add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black', fill=False))
-  
-  animat.plot()
+  if plot:
+    animat.plot()
+    ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
+    env.plot()
 
-  left_sensor, right_sensor, left_motor, right_motor = animat.evaluate(env)
+    multiplots = plots[1].subfigures(2,2)
 
-  plt.gca().add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
-  env.plot()
+    ax0 = multiplots[0][0].subplots()
+    ax0.set_title('Battery')
+    ax0.plot(animat.battery_hist)
 
-  fig, axs = plt.subplots(2)
-  axs[0].set_title('Left sensors')
-  axs[0].plot(left_sensor, color='g')
-  axs[1].set_title('Right sensors')
-  axs[1].plot(right_sensor, color='g')
-  fig2, axs2 = plt.subplots(2)
-  axs2[0].set_title('Left motor states')
-  axs2[0].plot(left_motor, color='g')
-  axs2[1].set_title('Right motor states')
-  axs2[1].plot(right_motor, color='g')
+    ax1 = multiplots[0][1].subplots(2,1)
+    ax1[0].set_title('Left sensors')
+    ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.FOOD.value], color='g')
+    ax1[1].set_title('Right sensors')
+    ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.FOOD.value], color='g')
+    
+    ax2 = multiplots[1][0].subplots(2,1)
+    ax2[0].set_title('Left motor states')
+    ax2[0].plot(animat.motor_hist[Sides.LEFT.value], color='g')
+    ax2[1].set_title('Right motor states')
+    ax2[1].plot(animat.motor_hist[Sides.RIGHT.value], color='g')
+    
+    ax3 = multiplots[1][1].subplots()
+    ax3.set_title('Chemical concentrations')
+    for chemical in animat.controller.chemicals:
+      ax3.plot(chemical.hist, label=chemical.formula)
+    ax3.legend()
 
-  fig2, ax2 = plt.subplots()
-  ax2.set_title('chemical concentrations')
-  for chemical in animat.controller.chemicals:
-    ax2.plot(chemical.hist, label=chemical.formula)
-  ax2.legend()
-
-  plt.show()
+    plt.show()
 
   animat.controller.print_derivs()
 
@@ -246,10 +214,6 @@ def test_animat_trial(controller=None):
 if __name__ == '__main__':
 
   np.set_printoptions(precision=5)
-
-  # one = Animat()
-  # two = Animat(one.controller.deep_copy())
-  # print(one == two)
 
   test_animat_trial()
   test_animat_trial()

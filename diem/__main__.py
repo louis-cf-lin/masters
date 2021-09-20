@@ -5,7 +5,7 @@ from Animat import Animat, test_animat_trial
 
 if __name__ == '__main__':
 
-  GENS = 50
+  GENS = 10
 
   pop = Population()
   mean = [None] * GENS
