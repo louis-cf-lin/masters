@@ -10,7 +10,15 @@ class Population:
   DEME_SIZE = 10
   CROSS = 0.5
   MUT = 0.04
+  N_TOUR_ROUNDS = 5
   def __init__(self):
+    self.animats = []
+    # while len(self.animats) < Population.SIZE:
+    #   animat = Animat()
+    #   animat.evaluate(Env(), plot=False)
+    #   if animat.fitness > 50:
+    #     print(f'Triage {len(self.animats)}')
+    #     self.animats.append(Animat(animat.controller.deep_copy()))
     self.animats = [Animat() for _ in range(Population.SIZE)]
   
   def eval(self):
@@ -28,28 +36,21 @@ class Population:
     return max, mean, min
 
   def evolve(self):
-    genomes = [copy.deepcopy(animat.genome) for animat in self.animats]
-    for _ in range(10):
+    controllers = [animat.controller.deep_copy() for animat in self.animats]
+    for _ in range(Population.N_TOUR_ROUNDS):
       a = POP_RNG.integers(Population.SIZE)
       b = (a + 1 + POP_RNG.integers(Population.DEME_SIZE)) % Population.SIZE # wrap around
 
       if (self.animats[a].fitness > self.animats[b].fitness):
-        w_index = a
-        l_index = b
+        controllers[b] = controllers[a].deep_copy()
+        controllers[b].mutate()
       else:
-        w_index = b
-        l_index = a
-      
-      offspring = copy.deepcopy(self.animats[l_index].genome)
-      for type_i, type_link_genome in enumerate(self.animats[w_index].genome):
-        for link_i, link_genome in enumerate(type_link_genome):
-          for gene_i, gene in enumerate(link_genome):
-            if POP_RNG.random() < Population.CROSS:
-              offspring[type_i][link_i][gene_i] = copy.deepcopy(gene)
-            if POP_RNG.random() < Population.MUT:
-              offspring[type_i][link_i][gene_i] = POP_RNG.random()
+        controllers[a] = controllers[b].deep_copy()
+        controllers[a].mutate()
+    
+    self.animats = [Animat(controller) for controller in controllers]
 
-      genomes[l_index] = offspring
-        
-    self.animats = [Animat(genomes[animat]) for animat in range(Population.SIZE)]
-
+if __name__ == '__main__':
+  pop = Population()
+  pop.eval()
+  pop.evolve()

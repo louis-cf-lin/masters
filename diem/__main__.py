@@ -5,18 +5,18 @@ from Animat import Animat, test_animat_trial
 
 if __name__ == '__main__':
 
-  GENS = 400
+  GENS = 50
 
-  env = Env()
   pop = Population()
   mean = [None] * GENS
   max = [None] * GENS
   min = [None] * GENS
   for gen in range(GENS):
+    print(gen)
     max[gen], mean[gen], min[gen] = pop.eval()
     pop.evolve()
 
-  pop.eval(env)
+  pop.eval()
   plt.plot(mean)
   plt.plot(max)
   plt.plot(min)
@@ -27,4 +27,4 @@ if __name__ == '__main__':
     if animat.fitness > best.fitness:
       best = animat
 
-  test_animat_trial(best.genome, env)
+  test_animat_trial(best.controller.deep_copy())
