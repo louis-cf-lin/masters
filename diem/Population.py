@@ -10,13 +10,13 @@ class Population:
   DEME_SIZE = 10
   CROSS = 0.5
   MUT = 0.04
-  N_TOUR_ROUNDS = 5
+  N_TOUR_ROUNDS = 10
   def __init__(self):
     self.animats = []
     # while len(self.animats) < Population.SIZE:
     #   animat = Animat()
-    #   animat.evaluate(Env(), plot=False)
-    #   if animat.fitness > 50:
+    #   animat.evaluate(Env())
+    #   if animat.fitness > 50: 
     #     print(f'Triage {len(self.animats)}')
     #     self.animats.append(Animat(animat.controller.deep_copy()))
     self.animats = [Animat() for _ in range(Population.SIZE)]
@@ -25,7 +25,7 @@ class Population:
     fitnesses = [None] * Population.SIZE
     for i, animat in enumerate(self.animats):
       env_instance = Env()
-      animat.evaluate(env_instance, plot=False)
+      animat.evaluate(env_instance)
 
       fitnesses[i] = animat.fitness
 
@@ -49,8 +49,7 @@ class Population:
         controllers[a].mutate()
     
     self.animats = [Animat(controller) for controller in controllers]
+  
 
 if __name__ == '__main__':
   pop = Population()
-  pop.eval()
-  pop.evolve()

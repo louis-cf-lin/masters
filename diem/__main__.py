@@ -5,7 +5,7 @@ from Animat import Animat, test_animat_trial
 
 if __name__ == '__main__':
 
-  GENS = 10
+  GENS = 250
 
   pop = Population()
   mean = [None] * GENS
@@ -17,10 +17,22 @@ if __name__ == '__main__':
     pop.evolve()
 
   pop.eval()
-  plt.plot(mean)
-  plt.plot(max)
-  plt.plot(min)
-  plt.show()
+
+  fig, axs = plt.subplots(1, 2, figsize=(16,8))
+  axs[0].set_title('Generational fitness')
+  axs[0].plot(mean)
+  axs[0].plot(max)
+  axs[0].plot(min)
+  axs[0].set_ylabel('Fitness')
+  axs[0].set_xlabel('Generation')
+  
+  axs[1].set_title('Population trajectories')
+  axs[1].set_aspect('equal')
+  axs[1].set_xlim(Env.MIN_X, Env.MAX_X)
+  axs[1].set_ylim(Env.MIN_Y, Env.MAX_Y)
+  for animat in pop.animats:
+    axs[1].plot(animat.x_hist, animat.y_hist, 'k-', ms=1, alpha=0.1)
+  
 
   best = Animat()
   for animat in pop.animats:
@@ -28,3 +40,5 @@ if __name__ == '__main__':
       best = animat
 
   test_animat_trial(best.controller.deep_copy())
+
+  print('stop')

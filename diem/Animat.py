@@ -46,8 +46,8 @@ class Animat:
   MAX_BATTERY = 1
   DRAIN_RATE = 0.01
   MAX_LIFE = 800
-  RADIUS = 0.1
-  SENSOR_ANGLES = [math.pi/2, -math.pi/2]
+  RADIUS = 0.05
+  SENSOR_ANGLES = [math.pi/4, -math.pi/4]
 
   def __init__(self, controller=None):
     if controller is None:
@@ -65,11 +65,11 @@ class Animat:
     # self.x = np.random.random()
     # self.y = np.random.random()
     # self.theta = np.random.random() * 2*math.pi
-    self.x = 0.25
+    self.x = 1
     self.x_hist = [self.x]
-    self.y = 0.25
+    self.y = -1
     self.y_hist = [self.y]
-    self.theta = math.pi / 2
+    self.theta = math.pi * 5 / 8
 
     self.battery = Animat.MAX_BATTERY
     self.battery_hist = [Animat.MAX_BATTERY]
@@ -100,6 +100,7 @@ class Animat:
         self.sens_hist[side.value][type.value].append(reading)
     # get chemical outputs
     left_out, right_out = self.controller.get_outputs(np.sum(readings[Sides.LEFT.value]), np.sum(readings[Sides.RIGHT.value]))
+    
     # set motor state
     left_motor_state = min(1.0, left_out / len(EnvObjectTypes))
     right_motor_state = min(1.0, right_out / len(EnvObjectTypes))
@@ -140,15 +141,16 @@ class Animat:
     env.update()
 
 
-  def evaluate(self, env, plot=True):
+  def evaluate(self, env):
     for i in range(Animat.MAX_LIFE):
       self.prepare(env)
       self.update(env)
       if not self.alive:
         break
-    if (i > Animat.MAX_LIFE-1):
+    if (i >= Animat.MAX_LIFE-1):
       print('died of old age')
   
+
   def plot(self):
     plt.plot(self.x_hist, self.y_hist, 'ko', ms=1, alpha=0.5)
 
@@ -167,8 +169,8 @@ def test_animat_trial(controller=None, plot=True):
     plots = fig.subfigures(1, 2)
     ax = plots[0].subplots()
     ax.set_aspect('equal')
-    ax.set_xlim(Env.MIN_X, Env.MAX_X)
-    ax.set_ylim(Env.MIN_Y, Env.MAX_Y)
+    # ax.set_xlim(Env.MIN_X, Env.MAX_X)
+    # ax.set_ylim(Env.MIN_Y, Env.MAX_Y)
     ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black', fill=False))
 
   animat.evaluate(env)
@@ -186,20 +188,24 @@ def test_animat_trial(controller=None, plot=True):
 
     ax1 = multiplots[0][1].subplots(2,1)
     ax1[0].set_title('Left sensors')
-    ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.FOOD.value], color='g')
+    ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.FOOD.value], color='r')
     ax1[1].set_title('Right sensors')
     ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.FOOD.value], color='g')
     
     ax2 = multiplots[1][0].subplots(2,1)
-    ax2[0].set_title('Left motor states')
-    ax2[0].plot(animat.motor_hist[Sides.LEFT.value], color='g')
-    ax2[1].set_title('Right motor states')
+    ax2[0].set_title('Left motor')
+    ax2[0].plot(animat.motor_hist[Sides.LEFT.value], color='r')
+    ax2[1].set_title('Right motor')
     ax2[1].plot(animat.motor_hist[Sides.RIGHT.value], color='g')
     
     ax3 = multiplots[1][1].subplots()
     ax3.set_title('Chemical concentrations')
-    for chemical in animat.controller.chemicals:
-      ax3.plot(chemical.hist, label=chemical.formula)
+    color = ['r','g','b','m']
+    for (i, chemical) in enumerate(animat.controller.chemicals):
+      if i < 4:
+        ax3.plot(chemical.hist, label=chemical.formula, c=color[i], zorder=1)
+      else:
+        ax3.plot(chemical.hist, ':', label=chemical.formula, c='black', alpha=0.25, zorder=0)
     ax3.legend()
 
     plt.show()
@@ -215,7 +221,5 @@ if __name__ == '__main__':
 
   np.set_printoptions(precision=5)
 
-  test_animat_trial()
-  test_animat_trial()
   test_animat_trial()
 
