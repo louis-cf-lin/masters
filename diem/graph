@@ -1,0 +1,20 @@
+// chem
+digraph {
+	011 [label=<<b>011</b><br/>> fillcolor=gold fontsize=12 shape=circle style=filled]
+	11 [label=<<b>11</b><br/>> fillcolor=gold fontsize=12 shape=circle style=filled]
+	01 [label=<<b>01</b><br/>> fillcolor=gold fontsize=12 shape=circle style=filled]
+	1 [label=<<b>1</b><br/>> fillcolor=gold fontsize=12 shape=circle style=filled]
+	00 [label=<<b>00</b><br/>> fillcolor=gold fontsize=12 shape=circle style=filled]
+	0 [label=<<b>0</b><br/>> fillcolor=gold fontsize=12 shape=circle style=filled]
+	001 [label=<<b>001</b><br/>> fillcolor=gold fontsize=12 shape=circle style=filled]
+	000 [label=<<b>000</b><br/>> fillcolor=gold fontsize=12 shape=circle style=filled]
+	111 [label=<<b>111</b><br/>> fillcolor=gold fontsize=12 shape=circle style=filled]
+	"[011]↔[0]+[11]" [label=<<b>[011]↔[0]+[11]</b><br/>> fontsize=10 shape=plaintext]
+	"[011]↔[0]+[11]" -> 011
+	"[011]↔[0]+[11]" -> 0
+	"[011]↔[0]+[11]" -> 11
+	"[001]↔[0]+[01]" [label=<<b>[001]↔[0]+[01]</b><br/>> fontsize=10 shape=plaintext]
+	"[001]↔[0]+[01]" -> 001
+	"[001]↔[0]+[01]" -> 0
+	"[001]↔[0]+[01]" -> 01
+}

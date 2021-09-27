@@ -1,7 +1,9 @@
 from functools import reduce
+from Sides import Sides
+from collections import Counter
 import copy
 import numpy as np
-from collections import Counter
+from Env import EnvObjectTypes
 
 AGGREGATION = True
 
@@ -10,6 +12,13 @@ MUTATION_RATE = 0.1
 DRAIN_RATE = 0.004
 
 NETWORK_RNG = np.random.default_rng(814486224)
+
+def rand_formula(max_len):
+  formula = ''
+  length = NETWORK_RNG.integers(1, max_len + 1)
+  for _ in range(length):
+    formula += str(NETWORK_RNG.integers(2))
+  return formula
 
 def add_noise(value, max):
   if NETWORK_RNG.random() < MUTATION_RATE:
@@ -92,11 +101,11 @@ class Reaction:
     return np.array_equal(self.lhs, other.lhs) and np.array_equal(self.rhs, other.rhs) and self.forward == other.forward and self.backward == other.backward
   
   def __repr__(self):
-    return '{} → {}'.format(self.lhs, self.rhs)
+    return '+'.join([f'[{chem.formula}]' for chem in self.lhs]) + '↔' + '+'.join([f'[{chem.formula}]' for chem in self.rhs])
 
   def __str__(self):
-    return '{} → {}'.format(self.lhs, self.rhs)
-
+    return '+'.join([f'[{chem.formula}]' for chem in self.lhs]) + '↔' + '+'.join([f'[{chem.formula}]' for chem in self.rhs])
+  
   def prep_update(self):
     lhs_product = reduce(lambda x, y: x*y, [chemical.conc for chemical in self.lhs])
     rhs_product = reduce(lambda x, y: x*y, [chemical.conc for chemical in self.rhs])
@@ -122,19 +131,20 @@ class Reaction:
 
 class Network:
 
-  INIT_CHEMICAL_LEN = 3
-  N_INIT_CHEMICALS = 4
+  N_INIT_CHEMICALS = 6
   N_INIT_REACTIONS = 4
 
-  INPUT_LEFT = 0
-  INPUT_RIGHT = 1
-  OUTPUT_LEFT = 2
-  OUTPUT_RIGHT = 3
+  FOOD_LEFT = 0
+  FOOD_RIGHT = 1
+  WATER_LEFT = 2
+  WATER_RIGHT = 3
+  OUTPUT_LEFT = 4
+  OUTPUT_RIGHT = 5
 
   def __init__(self):
     self.chemicals = []
     while len(self.chemicals) < Network.N_INIT_CHEMICALS:
-      formula = f'{NETWORK_RNG.integers(2**Network.INIT_CHEMICAL_LEN):03b}'
+      formula = rand_formula(Chemical.FORMULA_LEN_MAX)
       if AGGREGATION:
         formula = ''.join(sorted(formula))
       for chem in self.chemicals:
@@ -208,11 +218,11 @@ class Network:
       self.reactions.append(Reaction(lhs, np.array(rhs)))
     return 
   
-  def get_outputs(self, left_reading, right_reading):
+  def get_outputs(self, readings):
     # for i, chemical in enumerate(self.chemicals):
-    #   if i == Network.INPUT_LEFT:
+    #   if i == Network.FOOD_LEFT:
     #     chemical.prep_update(left_reading*1.5)
-    #   elif i == Network.INPUT_RIGHT:
+    #   elif i == Network.FOOD_RIGHT:
     #     chemical.prep_update(right_reading*1.5)
     #   else:
     #     chemical.prep_update()
@@ -222,8 +232,10 @@ class Network:
     for reaction in self.reactions:
       reaction.prep_update()
     
-    self.chemicals[Network.INPUT_LEFT].dconc = -self.chemicals[Network.INPUT_LEFT].conc + left_reading 
-    self.chemicals[Network.INPUT_RIGHT].dconc = -self.chemicals[Network.INPUT_RIGHT].conc + right_reading
+    self.chemicals[Network.FOOD_LEFT].dconc = -self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value] 
+    self.chemicals[Network.FOOD_RIGHT].dconc = -self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value] 
+    self.chemicals[Network.WATER_LEFT].dconc = -self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.WATER.value]
+    self.chemicals[Network.WATER_RIGHT].dconc = -self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value]
 
     for chemical in self.chemicals:
       chemical.update()
@@ -277,6 +289,4 @@ class Network:
 
 if __name__ == '__main__':
   net = Network()
-  copied = net.deep_copy()
-
-  print(net == copied)
+  print(net)

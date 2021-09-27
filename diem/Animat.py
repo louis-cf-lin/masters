@@ -1,12 +1,9 @@
-import math, numpy as np, matplotlib.pyplot as plt, copy, random
-from enum import Enum
+import math, numpy as np, matplotlib.pyplot as plt, copy
+from Sides import Sides
 from Env import EnvObjectTypes, Env
 from Network import Network
+from graphviz import Digraph
 
-class Sides(Enum):
-
-  LEFT = 0
-  RIGHT = 1
 
 def find_nearest(animat, env):
   for type in EnvObjectTypes:
@@ -71,15 +68,15 @@ class Animat:
     self.y_hist = [self.y]
     self.theta = math.pi * 5 / 8
 
-    self.battery = Animat.MAX_BATTERY
-    self.battery_hist = [Animat.MAX_BATTERY]
+    self.battery = [Animat.MAX_BATTERY, Animat.MAX_BATTERY]
+    self.battery_hist = [[Animat.MAX_BATTERY], [Animat.MAX_BATTERY]]
     self.fitness = 0
     self.alive = True
-  
+
 
   def __eq__(self, other) :
     return self.controller == other.controller and np.array_equal(self.nearest, other.nearest) and np.array_equal(self.dsq, other.dsq) and self.dx == other.dx and self.dy == other.dy and self.dtheta == other.dtheta
-  
+
 
   def prepare(self, env):
     # store closest object of each type
@@ -99,7 +96,7 @@ class Animat:
         readings[side.value][type.value] = reading
         self.sens_hist[side.value][type.value].append(reading)
     # get chemical outputs
-    left_out, right_out = self.controller.get_outputs(np.sum(readings[Sides.LEFT.value]), np.sum(readings[Sides.RIGHT.value]))
+    left_out, right_out = self.controller.get_outputs(readings)
     
     # set motor state
     left_motor_state = min(1.0, left_out / len(EnvObjectTypes))
@@ -111,7 +108,7 @@ class Animat:
     self.dx = mag * math.cos(self.theta) * 0.05
     self.dy = mag * math.sin(self.theta) * 0.05
     self.dtheta = (right_motor_state - left_motor_state) / Animat.RADIUS * 0.05
-  
+
 
   def update(self, env):
     # update position and orientation
@@ -125,34 +122,51 @@ class Animat:
     for type in EnvObjectTypes:
       if self.dsq[type.value] <= Animat.RADIUS ** 2:
         encountered = copy.deepcopy(self.nearest[type.value])
-        env.hist.append(encountered)
+        env.consumed.append(encountered)
         self.nearest[type.value].reset()
         if encountered.type == 'FOOD' or encountered.type == 'WATER':
-          self.battery += encountered.conc
+          self.battery[type.value] += Animat.MAX_BATTERY
         else:
-          self.battery = 0
+          self.battery = [0, 0]
     if not encountered:
-      self.battery -= Animat.DRAIN_RATE
+      self.battery = [bat - Animat.DRAIN_RATE for bat in self.battery]
     # update battery and env
-    self.fitness += self.battery
-    self.battery_hist.append(self.battery)
-    if self.battery <= 0:
+    self.fitness += sum(self.battery)
+    self.battery_hist[EnvObjectTypes.FOOD.value].append(self.battery[EnvObjectTypes.FOOD.value])
+    self.battery_hist[EnvObjectTypes.WATER.value].append(self.battery[EnvObjectTypes.WATER.value])
+    if any(b <= 0 for b in self.battery):
       self.alive = False
-    env.update()
 
 
   def evaluate(self, env):
-    for i in range(Animat.MAX_LIFE):
+    for _ in range(Animat.MAX_LIFE):
       self.prepare(env)
       self.update(env)
       if not self.alive:
         break
-    if (i >= Animat.MAX_LIFE-1):
-      print('died of old age')
-  
+
 
   def plot(self):
     plt.plot(self.x_hist, self.y_hist, 'ko', ms=1, alpha=0.5)
+
+
+  def graph(self):
+    dot = Digraph(comment='chem', engine='neato')
+
+    for chem in self.controller.chemicals:
+      atts = { 'fontsize': '12'}
+      dot.node(chem.formula, shape='circle', fillcolor='gold', style='filled', label=f'<<b>{chem.formula}</b><br/>>', **atts)
+    
+    for rxn in self.controller.reactions:
+      atts = {'fontsize' : '10'}
+      dot.node(str(rxn), shape='plaintext', label=f'<<b>{str(rxn)}</b><br/>>', **atts)
+      for lhs_chem in rxn.lhs:
+        dot.edge(str(rxn), lhs_chem.formula)
+      for rhs_chem in rxn.rhs:
+        dot.edge(str(rxn), rhs_chem.formula)
+
+    dot.format = 'png'
+    dot.render('graph')
 
 
 def test_animat_trial(controller=None, plot=True):
@@ -184,13 +198,16 @@ def test_animat_trial(controller=None, plot=True):
 
     ax0 = multiplots[0][0].subplots()
     ax0.set_title('Battery')
-    ax0.plot(animat.battery_hist)
+    ax0.plot(animat.battery_hist[EnvObjectTypes.FOOD.value], color='g')
+    ax0.plot(animat.battery_hist[EnvObjectTypes.WATER.value], color='b')
 
     ax1 = multiplots[0][1].subplots(2,1)
     ax1[0].set_title('Left sensors')
-    ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.FOOD.value], color='r')
+    ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.FOOD.value], color='g')
+    ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.WATER.value], color='b')
     ax1[1].set_title('Right sensors')
     ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.FOOD.value], color='g')
+    ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.WATER.value], color='b')
     
     ax2 = multiplots[1][0].subplots(2,1)
     ax2[0].set_title('Left motor')
@@ -200,9 +217,9 @@ def test_animat_trial(controller=None, plot=True):
     
     ax3 = multiplots[1][1].subplots()
     ax3.set_title('Chemical concentrations')
-    color = ['r','g','b','m']
+    color = ['r','g','b','c','m','y']
     for (i, chemical) in enumerate(animat.controller.chemicals):
-      if i < 4:
+      if i < 6:
         ax3.plot(chemical.hist, label=chemical.formula, c=color[i], zorder=1)
       else:
         ax3.plot(chemical.hist, ':', label=chemical.formula, c='black', alpha=0.25, zorder=0)
@@ -214,6 +231,8 @@ def test_animat_trial(controller=None, plot=True):
 
   print(f'Score is {animat.fitness}')
 
+  animat.graph()
+
   # for reaction in animat.controller.reactions:
   #   print(reaction)
 
@@ -222,4 +241,5 @@ if __name__ == '__main__':
   np.set_printoptions(precision=5)
 
   test_animat_trial()
+
 

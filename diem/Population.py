@@ -16,7 +16,7 @@ class Population:
     # while len(self.animats) < Population.SIZE:
     #   animat = Animat()
     #   animat.evaluate(Env())
-    #   if animat.fitness > 50: 
+    #   if animat.fitness > 200: 
     #     print(f'Triage {len(self.animats)}')
     #     self.animats.append(Animat(animat.controller.deep_copy()))
     self.animats = [Animat() for _ in range(Population.SIZE)]
