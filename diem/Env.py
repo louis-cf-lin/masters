@@ -16,8 +16,8 @@ class EnvObject:
     self.rstate = np.random.default_rng(rstate)
 
     if loc is None:
-      self.x = self.rstate.random() * 2.0 - 1.0
-      self.y = self.rstate.random() * 2.0 - 1.0
+      self.x = self.rstate.random() - 0.5
+      self.y = self.rstate.random() - 0.5
     else:
       self.x = loc[0]
       self.y = loc[1]
@@ -29,15 +29,15 @@ class EnvObject:
     return 'type: {}, x: {}, y: {}'.format(self.type, self.x, self.y)
   
   def reset(self):
-    self.x = self.rstate.random() * 2.0 - 1.0
-    self.y = self.rstate.random() * 2.0 - 1.0
+    self.x = self.rstate.random() - 0.5
+    self.y = self.rstate.random() - 0.5
 
 class Env:
 
-  MAX_X = 1
-  MAX_Y = 1
-  MIN_X = -1
-  MIN_Y = -1
+  MAX_X = 0.5
+  MAX_Y = 0.5
+  MIN_X = -0.5
+  MIN_Y = -0.5
   N_OBJECTS = [2, 2, 0]
 
   def __init__(self):

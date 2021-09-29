@@ -5,15 +5,19 @@ from Animat import Animat, test_animat_trial
 
 if __name__ == '__main__':
 
-  GENS = 1000
+  GENS = 10
 
+  highest_fitness = 0
   pop = Population()
   mean = [None] * GENS
   max = [None] * GENS
   min = [None] * GENS
   for gen in range(GENS):
     print(gen)
-    max[gen], mean[gen], min[gen] = pop.eval()
+    max[gen], mean[gen], min[gen], best = pop.eval()
+    if best.fitness > highest_fitness + 0.1:
+      highest_fitness = best.fitness
+      test_animat_trial(best.controller.deep_copy(), show=False, save=True)
     pop.evolve()
 
   pop.eval()
@@ -33,12 +37,6 @@ if __name__ == '__main__':
   for animat in pop.animats:
     axs[1].plot(animat.x_hist, animat.y_hist, 'k-', ms=1, alpha=0.1)
   
-
-  best = Animat()
-  for animat in pop.animats:
-    if animat.fitness > best.fitness:
-      best = animat
-
-  test_animat_trial(best.controller.deep_copy())
+  plt.savefig('population')
 
   print('stop')

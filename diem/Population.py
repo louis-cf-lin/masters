@@ -29,11 +29,12 @@ class Population:
 
       fitnesses[i] = animat.fitness
 
+    best_index = np.argmax(fitnesses)
+    max = fitnesses[best_index]
     mean = np.mean(fitnesses)
-    max = np.amax(fitnesses)
     min = np.amin(fitnesses)
     print('max:', round(max, 3), 'mean:', round(mean, 3), 'min:', round(min, 3))
-    return max, mean, min
+    return max, mean, min, self.animats[best_index]
 
   def evolve(self):
     controllers = [animat.controller.deep_copy() for animat in self.animats]

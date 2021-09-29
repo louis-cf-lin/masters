@@ -62,9 +62,9 @@ class Animat:
     # self.x = np.random.random()
     # self.y = np.random.random()
     # self.theta = np.random.random() * 2*math.pi
-    self.x = 1
+    self.x = Env.MAX_X
     self.x_hist = [self.x]
-    self.y = -1
+    self.y = Env.MIN_Y
     self.y_hist = [self.y]
     self.theta = math.pi * 5 / 8
 
@@ -129,13 +129,17 @@ class Animat:
         else:
           self.battery = [0, 0]
     if not encountered:
-      self.battery = [bat - Animat.DRAIN_RATE for bat in self.battery]
+      self.battery = [max(0, bat - Animat.DRAIN_RATE) for bat in self.battery]
     # update battery and env
     self.fitness += sum(self.battery)
     self.battery_hist[EnvObjectTypes.FOOD.value].append(self.battery[EnvObjectTypes.FOOD.value])
     self.battery_hist[EnvObjectTypes.WATER.value].append(self.battery[EnvObjectTypes.WATER.value])
-    if any(b <= 0 for b in self.battery):
+
+    # if any(b <= 0 for b in self.battery):
+    #   self.alive = False
+    if sum(self.battery) <= 0:
       self.alive = False
+    
 
 
   def evaluate(self, env):
@@ -153,9 +157,14 @@ class Animat:
   def graph(self):
     dot = Digraph(comment='chem', engine='neato')
 
-    for chem in self.controller.chemicals:
-      atts = { 'fontsize': '12'}
-      dot.node(chem.formula, shape='circle', fillcolor='gold', style='filled', label=f'<<b>{chem.formula}</b><br/>>', **atts)
+    label = ['FOOD LEFT', 'FOOD RIGHT', 'WATER LEFT', 'WATER RIGHT', 'OUT LEFT', 'OUT RIGHT']
+
+    for i, chem in enumerate(self.controller.chemicals):
+      atts = { 'fontsize': '10'}
+      if i < len(label):
+        dot.node(chem.formula, shape='rectangle', fillcolor='gold', style='filled', label=f'<<b>{label[i]}</b><br/>{chem.formula}>', **atts)
+      else:
+        dot.node(chem.formula, shape='rectangle', label=f'<{chem.formula}>', **atts)
     
     for rxn in self.controller.reactions:
       atts = {'fontsize' : '10'}
@@ -169,7 +178,7 @@ class Animat:
     dot.render('graph')
 
 
-def test_animat_trial(controller=None, plot=True):
+def test_animat_trial(controller=None, show=True, save=False):
 
   if controller is None:
     animat = Animat()
@@ -178,53 +187,58 @@ def test_animat_trial(controller=None, plot=True):
   
   env = Env()
   
-  if plot:
-    fig = plt.figure(constrained_layout=True, figsize=(16,8))
-    plots = fig.subfigures(1, 2)
-    ax = plots[0].subplots()
-    ax.set_aspect('equal')
-    # ax.set_xlim(Env.MIN_X, Env.MAX_X)
-    # ax.set_ylim(Env.MIN_Y, Env.MAX_Y)
-    ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black', fill=False))
+  fig = plt.figure(constrained_layout=True, figsize=(16,8))
+  plots = fig.subfigures(1, 2)
+  ax = plots[0].subplots()
+  ax.set_aspect('equal')
+  # ax.set_xlim(Env.MIN_X, Env.MAX_X)
+  # ax.set_ylim(Env.MIN_Y, Env.MAX_Y)
+  ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black', fill=False))
 
   animat.evaluate(env)
 
-  if plot:
-    animat.plot()
-    ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
-    env.plot()
+  
+  animat.plot()
+  ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
+  env.plot()
 
-    multiplots = plots[1].subfigures(2,2)
+  multiplots = plots[1].subfigures(2,2)
 
-    ax0 = multiplots[0][0].subplots()
-    ax0.set_title('Battery')
-    ax0.plot(animat.battery_hist[EnvObjectTypes.FOOD.value], color='g')
-    ax0.plot(animat.battery_hist[EnvObjectTypes.WATER.value], color='b')
+  ax0 = multiplots[0][0].subplots()
+  ax0.set_title('Battery')
+  ax0.plot(animat.battery_hist[EnvObjectTypes.FOOD.value], color='g')
+  ax0.plot(animat.battery_hist[EnvObjectTypes.WATER.value], color='b')
 
-    ax1 = multiplots[0][1].subplots(2,1)
-    ax1[0].set_title('Left sensors')
-    ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.FOOD.value], color='g')
-    ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.WATER.value], color='b')
-    ax1[1].set_title('Right sensors')
-    ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.FOOD.value], color='g')
-    ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.WATER.value], color='b')
-    
-    ax2 = multiplots[1][0].subplots(2,1)
-    ax2[0].set_title('Left motor')
-    ax2[0].plot(animat.motor_hist[Sides.LEFT.value], color='r')
-    ax2[1].set_title('Right motor')
-    ax2[1].plot(animat.motor_hist[Sides.RIGHT.value], color='g')
-    
-    ax3 = multiplots[1][1].subplots()
-    ax3.set_title('Chemical concentrations')
-    color = ['r','g','b','c','m','y']
-    for (i, chemical) in enumerate(animat.controller.chemicals):
-      if i < 6:
-        ax3.plot(chemical.hist, label=chemical.formula, c=color[i], zorder=1)
-      else:
-        ax3.plot(chemical.hist, ':', label=chemical.formula, c='black', alpha=0.25, zorder=0)
-    ax3.legend()
+  ax1 = multiplots[0][1].subplots(2,1)
+  ax1[0].set_title('Left sensors')
+  ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.FOOD.value], color='g')
+  ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.WATER.value], color='b')
+  ax1[1].set_title('Right sensors')
+  ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.FOOD.value], color='g')
+  ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.WATER.value], color='b')
+  
+  ax2 = multiplots[1][0].subplots(2,1)
+  ax2[0].set_title('Left motor')
+  ax2[0].plot(animat.motor_hist[Sides.LEFT.value], color='r')
+  ax2[1].set_title('Right motor')
+  ax2[1].plot(animat.motor_hist[Sides.RIGHT.value], color='g')
+  
+  ax3 = multiplots[1][1].subplots()
+  ax3.set_title('Chemical concentrations')
+  # color = ['r','g','b','c','m','y']
+  color = ['r','g','b','c']
+  # labels = ['Out L','Out R','Food L','Food R','Water L','Water R']
+  labels = ['Food L','Food R','Out L','Out R']
+  for (i, chemical) in enumerate(animat.controller.chemicals):
+    if i < 4:
+      ax3.plot(chemical.hist, label=f'{labels[i]} ({chemical.formula})', c=color[i], zorder=1)
+    else:
+      ax3.plot(chemical.hist, ':', label=chemical.formula, c='black', alpha=0.25, zorder=0)
+  ax3.legend()
 
+  if save:
+    plt.savefig('best_animat')
+  if show:
     plt.show()
 
   animat.controller.print_derivs()

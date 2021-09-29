@@ -7,15 +7,14 @@ from Env import EnvObjectTypes
 
 AGGREGATION = True
 
-DT = 0.5
+DT = 0.02
 MUTATION_RATE = 0.1
-DRAIN_RATE = 0.004
 
 NETWORK_RNG = np.random.default_rng(814486224)
 
-def rand_formula(max_len):
+def rand_formula(min_len = 3, max_len = 3):
   formula = ''
-  length = NETWORK_RNG.integers(1, max_len + 1)
+  length = NETWORK_RNG.integers(min_len, max_len + 1)
   for _ in range(length):
     formula += str(NETWORK_RNG.integers(2))
   return formula
@@ -40,6 +39,8 @@ class Chemical:
   POTENTIAL_MAX = 7.5
   INITIAL_CONC_MAX = 1
   DECAY_MAX = 1
+
+  CONC_MAX = 100.0
   
   def __init__(self, formula):
     self.formula = formula
@@ -60,14 +61,11 @@ class Chemical:
   def __str__(self):
     return self.formula    
 
-  def prep_update(self, sensor_reading=None):
-    if sensor_reading is None:
-      self.dconc = 0
-    else:
-      self.dconc = sensor_reading
+  def prep_update(self):
+    self.dconc = -self.decay*self.conc
 
   def update(self):
-    self.conc =  min(10.0, max(0.0, self.conc + self.dconc*DT))
+    self.conc = min(Chemical.CONC_MAX, max(0.0, self.conc + self.dconc*DT*25))
     self.hist.append(self.conc)
 
   def mutate(self):
@@ -115,9 +113,6 @@ class Reaction:
     for chemical in self.rhs:
       chemical.dconc += lhs_product*self.forward - rhs_product*self.backward
 
-    for chemical in self.lhs:
-      chemical.dconc -= chemical.decay*chemical.conc
-
   def mutate(self):
     self.fav_rate = add_noise(self.fav_rate, Reaction.FAV_RATE_MAX)
     mu_lhs = sum([lhs.potential for lhs in self.lhs])
@@ -131,20 +126,21 @@ class Reaction:
 
 class Network:
 
-  N_INIT_CHEMICALS = 6
+  N_INIT_CHEMICALS = 4
   N_INIT_REACTIONS = 4
 
   FOOD_LEFT = 0
   FOOD_RIGHT = 1
-  WATER_LEFT = 2
-  WATER_RIGHT = 3
-  OUTPUT_LEFT = 4
-  OUTPUT_RIGHT = 5
+  OUTPUT_LEFT = 2
+  OUTPUT_RIGHT = 3
+  # WATER_LEFT = 4
+  # WATER_RIGHT = 5
 
   def __init__(self):
     self.chemicals = []
     while len(self.chemicals) < Network.N_INIT_CHEMICALS:
-      formula = rand_formula(Chemical.FORMULA_LEN_MAX)
+      # formula = rand_formula(Chemical.FORMULA_LEN_MAX)
+      formula = rand_formula()
       if AGGREGATION:
         formula = ''.join(sorted(formula))
       for chem in self.chemicals:
@@ -232,15 +228,15 @@ class Network:
     for reaction in self.reactions:
       reaction.prep_update()
     
-    self.chemicals[Network.FOOD_LEFT].dconc = -self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value] 
-    self.chemicals[Network.FOOD_RIGHT].dconc = -self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value] 
-    self.chemicals[Network.WATER_LEFT].dconc = -self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.WATER.value]
-    self.chemicals[Network.WATER_RIGHT].dconc = -self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value]
+    self.chemicals[Network.FOOD_LEFT].dconc = (-self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value])*25
+    self.chemicals[Network.FOOD_RIGHT].dconc = (-self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value])*25
+    # self.chemicals[Network.WATER_LEFT].dconc = -20*self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.WATER.value]
+    # self.chemicals[Network.WATER_RIGHT].dconc = -20*self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value]
 
     for chemical in self.chemicals:
       chemical.update()
-    
-    return self.chemicals[Network.OUTPUT_LEFT].conc, self.chemicals[Network.OUTPUT_RIGHT].conc
+        
+    return self.chemicals[Network.OUTPUT_LEFT].conc / 20, self.chemicals[Network.OUTPUT_RIGHT].conc / 20
 
   def mutate(self):
     for chemical in self.chemicals:
