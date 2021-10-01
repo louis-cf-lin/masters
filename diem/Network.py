@@ -4,15 +4,12 @@ from collections import Counter
 import copy
 import numpy as np
 from Env import EnvObjectTypes
+from globals import DT, AGGREGATION, MUTATION_RATE
 
-AGGREGATION = True
-
-DT = 0.02
-MUTATION_RATE = 0.1
 
 NETWORK_RNG = np.random.default_rng(814486224)
 
-def rand_formula(min_len = 3, max_len = 3):
+def rand_formula(min_len = 4, max_len = 4):
   formula = ''
   length = NETWORK_RNG.integers(min_len, max_len + 1)
   for _ in range(length):
@@ -32,15 +29,15 @@ class Chemical:
   N_GENES = 4
 
   INIT_POTENTIAL_MAX = 7.5
-  INIT_INITIAL_CONC_MAX = 1
+  INIT_INITIAL_CONC_MAX = 1.0
   INIT_DECAY_MAX = 1
 
-  FORMULA_LEN_MAX = 3
+  FORMULA_LEN_MAX = 4
   POTENTIAL_MAX = 7.5
   INITIAL_CONC_MAX = 1
   DECAY_MAX = 1
 
-  CONC_MAX = 100.0
+  CONC_MAX = 25.0
   
   def __init__(self, formula):
     self.formula = formula
@@ -78,22 +75,27 @@ class Chemical:
 class Reaction:
   
   INIT_FAV_RATE_MAX = 1
-  FAV_RATE_MAX = 60
+  FAV_RATE_MAX = 1
+  SLOPE_MAX = 1
   
   def __init__(self, lhs, rhs):
     self.lhs = lhs
     self.rhs = rhs
     self.fav_rate = NETWORK_RNG.random() * Reaction.INIT_FAV_RATE_MAX
+    self.battery = (NETWORK_RNG.random() < 0.5).real
+    self.slope = NETWORK_RNG.random() * Reaction.SLOPE_MAX
 
     # unfavoured rate = favoured rate * e^(-R+P)
-    mu_lhs = sum([lhs.potential for lhs in self.lhs])
-    mu_rhs = sum([rhs.potential for rhs in self.rhs])
-    if mu_lhs > mu_rhs:
-      self.forward = self.fav_rate
-      self.backward = self.fav_rate * (np.e ** (-mu_lhs+mu_rhs))
+    self.mu_lhs = sum([lhs.potential for lhs in self.lhs])
+    self.mu_rhs = sum([rhs.potential for rhs in self.rhs])
+    if self.mu_lhs > self.mu_rhs:
+      # self.forward = self.fav_rate
+      self.forward_favoured = True
+      # self.backward = self.fav_rate * (np.e ** (-mu_lhs+mu_rhs))
     else:
-      self.backward = self.fav_rate
-      self.forward = self.fav_rate * (np.e ** (-mu_rhs+mu_lhs))
+      # self.backward = self.fav_rate
+      self.forward_favoured = False
+      # self.forward = self.fav_rate * (np.e ** (-mu_rhs+mu_lhs))
   
   def __eq__(self, other):
     return np.array_equal(self.lhs, other.lhs) and np.array_equal(self.rhs, other.rhs) and self.forward == other.forward and self.backward == other.backward
@@ -104,43 +106,54 @@ class Reaction:
   def __str__(self):
     return '+'.join([f'[{chem.formula}]' for chem in self.lhs]) + '↔' + '+'.join([f'[{chem.formula}]' for chem in self.rhs])
   
-  def prep_update(self):
+  def prep_update(self, batteries):
     lhs_product = reduce(lambda x, y: x*y, [chemical.conc for chemical in self.lhs])
     rhs_product = reduce(lambda x, y: x*y, [chemical.conc for chemical in self.rhs])
+
+    if self.forward_favoured:
+      forward = self.fav_rate + (self.fav_rate * (( batteries[self.battery] - 0.5 / 0.5) * self.slope))
+      backward = forward * (np.e ** (-self.mu_rhs + self.mu_lhs))
+    else:
+      backward = self.fav_rate + (self.fav_rate * (( batteries[self.battery] - 0.5 / 0.5) * self.slope))
+      forward = backward * (np.e ** (-self.mu_rhs + self.mu_lhs))
     
     for chemical in self.lhs:
-      chemical.dconc += rhs_product*self.backward - lhs_product*self.forward
+      chemical.dconc += rhs_product*backward - lhs_product*forward
     for chemical in self.rhs:
-      chemical.dconc += lhs_product*self.forward - rhs_product*self.backward
+      chemical.dconc += lhs_product*forward - rhs_product*backward
 
   def mutate(self):
     self.fav_rate = add_noise(self.fav_rate, Reaction.FAV_RATE_MAX)
-    mu_lhs = sum([lhs.potential for lhs in self.lhs])
-    mu_rhs = sum([rhs.potential for rhs in self.rhs])
-    if mu_lhs > mu_rhs:
-      self.forward = self.fav_rate
-      self.backward = self.fav_rate * (np.e ** (-mu_lhs+mu_rhs))
+    self.slope = add_noise(self.slope, Reaction.SLOPE_MAX)
+    self.mu_lhs = sum([lhs.potential for lhs in self.lhs])
+    self.mu_rhs = sum([rhs.potential for rhs in self.rhs])
+    if self.mu_lhs > self.mu_rhs:
+      # self.forward = self.fav_rate
+      self.forward_favoured = True
+      # self.backward = self.fav_rate * (np.e ** (-mu_lhs+mu_rhs))
     else:
-      self.backward = self.fav_rate
-      self.forward = self.fav_rate * (np.e ** (-mu_rhs+mu_lhs))
+      # self.backward = self.fav_rate
+      self.forward_favoured = True
+      # self.forward = self.fav_rate * (np.e ** (-mu_rhs+mu_lhs))
+    if NETWORK_RNG.random() < MUTATION_RATE:
+      self.battery = (1,0)[self.battery]
 
 class Network:
 
-  N_INIT_CHEMICALS = 4
+  N_INIT_CHEMICALS = 6
   N_INIT_REACTIONS = 4
 
-  FOOD_LEFT = 0
-  FOOD_RIGHT = 1
-  OUTPUT_LEFT = 2
-  OUTPUT_RIGHT = 3
-  # WATER_LEFT = 4
-  # WATER_RIGHT = 5
+  OUTPUT_LEFT = 0
+  OUTPUT_RIGHT = 1
+  FOOD_LEFT = 2
+  FOOD_RIGHT = 3
+  WATER_LEFT = 4
+  WATER_RIGHT = 5
 
   def __init__(self):
     self.chemicals = []
     while len(self.chemicals) < Network.N_INIT_CHEMICALS:
-      # formula = rand_formula(Chemical.FORMULA_LEN_MAX)
-      formula = rand_formula()
+      formula = rand_formula(min_len = 1)
       if AGGREGATION:
         formula = ''.join(sorted(formula))
       for chem in self.chemicals:
@@ -214,29 +227,30 @@ class Network:
       self.reactions.append(Reaction(lhs, np.array(rhs)))
     return 
   
-  def get_outputs(self, readings):
-    # for i, chemical in enumerate(self.chemicals):
-    #   if i == Network.FOOD_LEFT:
-    #     chemical.prep_update(left_reading*1.5)
-    #   elif i == Network.FOOD_RIGHT:
-    #     chemical.prep_update(right_reading*1.5)
-    #   else:
-    #     chemical.prep_update()
+  def get_outputs(self, readings, batteries):
     for chemical in self.chemicals:
       chemical.prep_update()
 
     for reaction in self.reactions:
-      reaction.prep_update()
+      reaction.prep_update(batteries)
     
-    self.chemicals[Network.FOOD_LEFT].dconc = (-self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value])*25
-    self.chemicals[Network.FOOD_RIGHT].dconc = (-self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value])*25
-    # self.chemicals[Network.WATER_LEFT].dconc = -20*self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.WATER.value]
-    # self.chemicals[Network.WATER_RIGHT].dconc = -20*self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value]
+    self.chemicals[Network.FOOD_LEFT].dconc = \
+      (-self.chemicals[Network.FOOD_LEFT].conc 
+        + readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value]) * 25
+    self.chemicals[Network.FOOD_RIGHT].dconc = \
+      (-self.chemicals[Network.FOOD_RIGHT].conc
+        + readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value]) * 25
+    self.chemicals[Network.WATER_LEFT].dconc = \
+      (-self.chemicals[Network.WATER_LEFT].conc
+        + readings[Sides.LEFT.value][EnvObjectTypes.WATER.value]) * 25
+    self.chemicals[Network.WATER_RIGHT].dconc = \
+      (-self.chemicals[Network.WATER_RIGHT].conc
+        + readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value]) * 25
 
     for chemical in self.chemicals:
       chemical.update()
         
-    return self.chemicals[Network.OUTPUT_LEFT].conc / 20, self.chemicals[Network.OUTPUT_RIGHT].conc / 20
+    return self.chemicals[Network.OUTPUT_LEFT].conc / 25, self.chemicals[Network.OUTPUT_RIGHT].conc / 25
 
   def mutate(self):
     for chemical in self.chemicals:
@@ -257,30 +271,30 @@ class Network:
   def print_derivs(self):
     derivs = {}
 
-    for chemical in self.chemicals:
-      derivs[chemical.formula] = f"-{chemical.decay:.2f}"
+    # for chemical in self.chemicals:
+    #   derivs[chemical.formula] = f"-{chemical.decay:.2f}"
 
-    for reaction in self.reactions:
-      for chem in reaction.lhs:
-        derivs[chem.formula] += f" + {reaction.backward:.2f}"
-        for rhs_chem in reaction.rhs:
-          derivs[chem.formula] += f"[{rhs_chem}]"
+    # for reaction in self.reactions:
+    #   for chem in reaction.lhs:
+    #     derivs[chem.formula] += f" + {reaction.backward:.2f}"
+    #     for rhs_chem in reaction.rhs:
+    #       derivs[chem.formula] += f"[{rhs_chem}]"
         
-        derivs[chem.formula] += f" - {reaction.forward:.2f}"
-        for lhs_chem in reaction.lhs:
-          derivs[chem.formula] += f"[{lhs_chem}]"
+    #     derivs[chem.formula] += f" - {reaction.forward:.2f}"
+    #     for lhs_chem in reaction.lhs:
+    #       derivs[chem.formula] += f"[{lhs_chem}]"
 
-      for chem in reaction.rhs:
-        derivs[chem.formula] += f" + {reaction.forward:.2f}"
-        for lhs_chem in reaction.lhs:
-          derivs[chem.formula] += f"[{lhs_chem}]"
+    #   for chem in reaction.rhs:
+    #     derivs[chem.formula] += f" + {reaction.forward:.2f}"
+    #     for lhs_chem in reaction.lhs:
+    #       derivs[chem.formula] += f"[{lhs_chem}]"
         
-        derivs[chem.formula] += f" - {reaction.backward:.2f}"
-        for rhs_chem in reaction.rhs:
-          derivs[chem.formula] += f"[{rhs_chem}]"
+    #     derivs[chem.formula] += f" - {reaction.backward:.2f}"
+    #     for rhs_chem in reaction.rhs:
+    #       derivs[chem.formula] += f"[{rhs_chem}]"
 
-    for chemical, exp in derivs.items():
-      print(f"{chemical}: {exp}")
+    # for chemical, exp in derivs.items():
+    #   print(f"{chemical}: {exp}")
 
 
 if __name__ == '__main__':

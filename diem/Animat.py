@@ -3,6 +3,7 @@ from Sides import Sides
 from Env import EnvObjectTypes, Env
 from Network import Network
 from graphviz import Digraph
+from globals import DT
 
 
 def find_nearest(animat, env):
@@ -40,9 +41,9 @@ def get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient):
 
 class Animat:
 
-  MAX_BATTERY = 1
-  DRAIN_RATE = 0.01
-  MAX_LIFE = 800
+  FULL_BATTERY = 1
+  DRAIN_RATE = 0.5
+  MAX_LIFE = 16
   RADIUS = 0.05
   SENSOR_ANGLES = [math.pi/4, -math.pi/4]
 
@@ -68,8 +69,8 @@ class Animat:
     self.y_hist = [self.y]
     self.theta = math.pi * 5 / 8
 
-    self.battery = [Animat.MAX_BATTERY, Animat.MAX_BATTERY]
-    self.battery_hist = [[Animat.MAX_BATTERY], [Animat.MAX_BATTERY]]
+    self.battery = [Animat.FULL_BATTERY, Animat.FULL_BATTERY]
+    self.battery_hist = [[self.battery[0]], [self.battery[1]]]
     self.fitness = 0
     self.alive = True
 
@@ -96,18 +97,18 @@ class Animat:
         readings[side.value][type.value] = reading
         self.sens_hist[side.value][type.value].append(reading)
     # get chemical outputs
-    left_out, right_out = self.controller.get_outputs(readings)
+    left_out, right_out = self.controller.get_outputs(readings, self.battery)
     
     # set motor state
-    left_motor_state = min(1.0, left_out / len(EnvObjectTypes))
-    right_motor_state = min(1.0, right_out / len(EnvObjectTypes))
+    left_motor_state = min(1.0, left_out)
+    right_motor_state = min(1.0, right_out)
     self.motor_hist[Sides.LEFT.value].append(left_motor_state)
     self.motor_hist[Sides.RIGHT.value].append(right_motor_state)
     # calculate derivs
     mag = (left_motor_state + right_motor_state) / 2
-    self.dx = mag * math.cos(self.theta) * 0.05
-    self.dy = mag * math.sin(self.theta) * 0.05
-    self.dtheta = (right_motor_state - left_motor_state) / Animat.RADIUS * 0.05
+    self.dx = mag * math.cos(self.theta) * DT
+    self.dy = mag * math.sin(self.theta) * DT
+    self.dtheta = (right_motor_state - left_motor_state) / Animat.RADIUS * DT
 
 
   def update(self, env):
@@ -125,39 +126,31 @@ class Animat:
         env.consumed.append(encountered)
         self.nearest[type.value].reset()
         if encountered.type == 'FOOD' or encountered.type == 'WATER':
-          self.battery[type.value] += Animat.MAX_BATTERY
+          self.battery[type.value] = Animat.FULL_BATTERY
         else:
           self.battery = [0, 0]
     if not encountered:
-      self.battery = [max(0, bat - Animat.DRAIN_RATE) for bat in self.battery]
+      self.battery = [max(0, bat - Animat.DRAIN_RATE*DT) for bat in self.battery]
     # update battery and env
     self.fitness += sum(self.battery)
     self.battery_hist[EnvObjectTypes.FOOD.value].append(self.battery[EnvObjectTypes.FOOD.value])
     self.battery_hist[EnvObjectTypes.WATER.value].append(self.battery[EnvObjectTypes.WATER.value])
 
-    # if any(b <= 0 for b in self.battery):
-    #   self.alive = False
-    if sum(self.battery) <= 0:
+    if any(b <= 0 for b in self.battery):
       self.alive = False
-    
 
 
   def evaluate(self, env):
-    for _ in range(Animat.MAX_LIFE):
+    for _ in range(math.floor(Animat.MAX_LIFE / DT)):
       self.prepare(env)
       self.update(env)
       if not self.alive:
         break
 
-
-  def plot(self):
-    plt.plot(self.x_hist, self.y_hist, 'ko', ms=1, alpha=0.5)
-
-
   def graph(self):
     dot = Digraph(comment='chem', engine='neato')
 
-    label = ['FOOD LEFT', 'FOOD RIGHT', 'WATER LEFT', 'WATER RIGHT', 'OUT LEFT', 'OUT RIGHT']
+    label = ['OUT LEFT', 'OUT RIGHT', 'FOOD LEFT', 'FOOD RIGHT', 'WATER LEFT', 'WATER RIGHT']
 
     for i, chem in enumerate(self.controller.chemicals):
       atts = { 'fontsize': '10'}
@@ -198,7 +191,8 @@ def test_animat_trial(controller=None, show=True, save=False):
   animat.evaluate(env)
 
   
-  animat.plot()
+  ax.plot(animat.x_hist, animat.y_hist, 'ko', ms=1, alpha=0.5)
+  ax.plot(animat.x_hist, animat.y_hist, ms=1, alpha=0.1)
   ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
   env.plot()
 
@@ -225,12 +219,10 @@ def test_animat_trial(controller=None, show=True, save=False):
   
   ax3 = multiplots[1][1].subplots()
   ax3.set_title('Chemical concentrations')
-  # color = ['r','g','b','c','m','y']
-  color = ['r','g','b','c']
-  # labels = ['Out L','Out R','Food L','Food R','Water L','Water R']
-  labels = ['Food L','Food R','Out L','Out R']
+  color = ['r','g','b','c','m','y']
+  labels = ['Out L','Out R','Food L','Food R','Water L','Water R']
   for (i, chemical) in enumerate(animat.controller.chemicals):
-    if i < 4:
+    if i < len(labels):
       ax3.plot(chemical.hist, label=f'{labels[i]} ({chemical.formula})', c=color[i], zorder=1)
     else:
       ax3.plot(chemical.hist, ':', label=chemical.formula, c='black', alpha=0.25, zorder=0)
@@ -254,6 +246,8 @@ if __name__ == '__main__':
 
   np.set_printoptions(precision=5)
 
+  test_animat_trial()
+  test_animat_trial()
   test_animat_trial()
 
 
