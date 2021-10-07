@@ -21,11 +21,11 @@ class Population:
     #     self.animats.append(Animat(animat.controller.deep_copy()))
     self.animats = [Animat() for _ in range(Population.SIZE)]
   
-  def eval(self):
+  def eval(self, generation):
     fitnesses = [None] * Population.SIZE
     for i, animat in enumerate(self.animats):
-      env_instance = Env()
-      animat.evaluate(env_instance)
+      env = Env(generation)
+      animat.evaluate(env)
 
       fitnesses[i] = animat.fitness
 

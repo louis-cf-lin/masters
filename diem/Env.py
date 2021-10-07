@@ -11,7 +11,7 @@ class EnvObject:
   RADIUS = 0.05
   DECAY = 0.01
 
-  def __init__(self, type, rstate = 2, loc = None):
+  def __init__(self, type, rstate, loc = None):
     self.type = type
     self.rstate = np.random.default_rng(rstate)
 
@@ -40,8 +40,9 @@ class Env:
   MIN_Y = -0.5
   N_OBJECTS = [2, 2, 0]
 
-  def __init__(self):
-    self.objects = [[EnvObject(str(type.name), type.value * len(EnvObjectTypes) + i) for i in range(Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
+  def __init__(self, rstate):
+    self.rstate = np.random.default_rng(rstate)
+    self.objects = [ [ EnvObject(type=str(type.name), rstate=self.rstate) for i in range(Env.N_OBJECTS[type.value]) ] for type in EnvObjectTypes ]
     self.consumed = []
   
   def plot(self):
@@ -54,5 +55,9 @@ class Env:
       
 
 if __name__ == '__main__':
-  env = Env()
-
+  env = Env(0)
+  env.plot()
+  plt.xlim((-0.5,0.5))
+  plt.ylim((-0.5,0.5))
+  plt.axis('square')
+  plt.show()

@@ -5,22 +5,29 @@ from Animat import Animat, test_animat_trial
 
 if __name__ == '__main__':
 
-  GENS = 1000
+  GENS = 2000
 
   highest_fitness = 0
   pop = Population()
   mean = [None] * GENS
   max = [None] * GENS
   min = [None] * GENS
+
+  env_seed = 0
+  
   for gen in range(GENS):
     print(gen)
-    max[gen], mean[gen], min[gen], best = pop.eval()
+    batch = gen // 100
+    if (batch != env_seed):
+      env_seed = batch
+      highest_fitness = 0
+    max[gen], mean[gen], min[gen], best = pop.eval(env_seed)
     if best.fitness > highest_fitness + 0.1:
       highest_fitness = best.fitness
-      test_animat_trial(best.controller.deep_copy(), show=False, save=True)
+      test_animat_trial(env=Env(env_seed), controller=best.controller.deep_copy(), show=False, save=True, fname=batch)
     pop.evolve()
 
-  pop.eval()
+  pop.eval(env_seed)
 
   fig, axs = plt.subplots(1, 2, figsize=(16,8))
   axs[0].set_title('Generational fitness')

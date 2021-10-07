@@ -19,7 +19,7 @@ def find_nearest(animat, env):
 def get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient):
 
   # larger falloff means farther sight
-  falloff = 0.25
+  falloff = 0.5
 
   d_sq = (sens_x - obj_x)**2 + (sens_y - obj_y)**2
 
@@ -171,15 +171,13 @@ class Animat:
     dot.render('graph')
 
 
-def test_animat_trial(controller=None, show=True, save=False):
+def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
 
   if controller is None:
     animat = Animat()
   else:
     animat = Animat(controller)
-  
-  env = Env()
-  
+    
   fig = plt.figure(constrained_layout=True, figsize=(16,8))
   plots = fig.subfigures(1, 2)
   ax = plots[0].subplots()
@@ -229,7 +227,7 @@ def test_animat_trial(controller=None, show=True, save=False):
   ax3.legend()
 
   if save:
-    plt.savefig('best_animat')
+    plt.savefig(f'best_animat{fname}')
   if show:
     plt.show()
 
@@ -246,8 +244,8 @@ if __name__ == '__main__':
 
   np.set_printoptions(precision=5)
 
-  test_animat_trial()
-  test_animat_trial()
-  test_animat_trial()
+  test_animat_trial(env=Env(0))
+  test_animat_trial(env=Env(1))
+  test_animat_trial(env=Env(2))
 
 
