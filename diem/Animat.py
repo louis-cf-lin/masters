@@ -18,7 +18,7 @@ def find_nearest(animat, env):
 def get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient):
 
   # larger falloff means farther sight
-  falloff = 0.25
+  falloff = 0.5
 
   d_sq = (sens_x - obj_x)**2 + (sens_y - obj_y)**2
 
@@ -93,7 +93,7 @@ class Animat:
         obj_x = self.nearest[type.value].x
         obj_y = self.nearest[type.value].y
         reading = get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient)
-        readings[side.value][type.value] = reading * DT * 100
+        readings[side.value][type.value] = reading
         self.sens_hist[side.value][type.value].append(reading)
     # get chemical outputs
     left_out, right_out = self.controller.get_outputs(readings)
@@ -245,8 +245,10 @@ if __name__ == '__main__':
 
   np.set_printoptions(precision=5)
 
-  test_animat_trial(env=Env(0))
-  test_animat_trial(env=Env(1))
-  test_animat_trial(env=Env(2))
+  z = np.zeros((100,100))
+  xs = np.linspace(Env.MIN_X, Env.MAX_X, 100)
+  ys = np.linspace(Env.MIN_Y, Env.MAX_Y, 100)
+  
+
 
 
