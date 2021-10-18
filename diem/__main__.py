@@ -1,33 +1,31 @@
 import numpy as np, matplotlib.pyplot as plt
 from Env import Env
 from Population import Population
-from Animat import Animat, test_animat_trial
+from Animat import test_animat_trial
 
 if __name__ == '__main__':
 
-  GENS = 100
+  BATCHES = 1
+  BATCH_SIZE = 25
 
   highest_fitness = 0
   pop = Population()
-  mean = [None] * GENS
-  max = [None] * GENS
-  min = [None] * GENS
-
-  env_seed = 0
+  mean = [None] * BATCHES * BATCH_SIZE
+  max = [None] * BATCHES * BATCH_SIZE
+  min = [None] * BATCHES * BATCH_SIZE
   
-  for gen in range(GENS):
-    print(gen)
-    batch = gen // 100
-    if (batch != env_seed):
-      env_seed = batch
-      highest_fitness = 0
-    max[gen], mean[gen], min[gen], best = pop.eval(env_seed)
-    if best.fitness > highest_fitness + 0.1:
-      highest_fitness = best.fitness
-      test_animat_trial(env=Env(env_seed), controller=best.controller.deep_copy(), show=False, save=True, fname=batch)
-    pop.evolve()
+  for batch in range(BATCHES):
+    highest_fitness = 0
+    for repeat in range(BATCH_SIZE):
+      gen = batch * BATCH_SIZE + repeat
+      print(gen)
+      max[gen], mean[gen], min[gen], best = pop.eval(batch)
+      if best.fitness > highest_fitness + 0.01:
+        highest_fitness = best.fitness
+        test_animat_trial(env=Env(batch), controller=best.controller.deep_copy(), show=False, save=True, fname=batch)
+      pop.evolve()
 
-  pop.eval(env_seed)
+  pop.eval(batch)
 
   fig, axs = plt.subplots(1, 2, figsize=(16,8))
   axs[0].set_title('Generational fitness')
@@ -44,6 +42,6 @@ if __name__ == '__main__':
   for animat in pop.animats:
     axs[1].plot(animat.x_hist, animat.y_hist, 'k-', ms=1, alpha=0.1)
   
-  plt.savefig('population')
+  plt.savefig('plot_population')
 
   print('stop')

@@ -29,15 +29,13 @@ class Chemical:
   N_GENES = 4
 
   INIT_POTENTIAL_MAX = 7.5
-  INIT_INITIAL_CONC_MAX = 1.0
-  INIT_DECAY_MAX = 1
+  INIT_INITIAL_CONC_MAX = 2.0
+  INIT_DECAY_MAX = 1.0
 
   FORMULA_LEN_MAX = 4
   POTENTIAL_MAX = 7.5
-  INITIAL_CONC_MAX = 1
-  DECAY_MAX = 1
-
-  CONC_MAX = 25.0
+  INITIAL_CONC_MAX = 5.0
+  DECAY_MAX = 10.0
   
   def __init__(self, formula):
     self.formula = formula
@@ -58,13 +56,13 @@ class Chemical:
   def __str__(self):
     return self.formula    
 
-  def prep_update(self, reading=None):
-    self.dconc = -self.decay*self.conc
+  def prep_update(self, reading = None):
+    self.dconc = -self.decay * self.conc
     if not reading == None:
       self.dconc += reading
 
   def update(self):
-    self.conc = min(Chemical.CONC_MAX, max(0.0, self.conc + self.dconc*DT*25))
+    self.conc += self.dconc * DT
     self.hist.append(self.conc)
 
   def mutate(self):
@@ -76,9 +74,8 @@ class Chemical:
 
 class Reaction:
   
-  INIT_FAV_RATE_MAX = 1
-  FAV_RATE_MAX = 1
-  SLOPE_MAX = 1
+  INIT_FAV_RATE_MAX = 0.1
+  FAV_RATE_MAX = 60.0
   
   def __init__(self, lhs, rhs):
     self.lhs = lhs
@@ -216,24 +213,22 @@ class Network:
     return 
   
   def get_outputs(self, readings):
-
     # set decay
     for chemical in self.chemicals:
       chemical.prep_update()
-
+    # add sensor inputs
+    self.chemicals[Network.FOOD_LEFT].prep_update(readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value])
+    self.chemicals[Network.FOOD_RIGHT].prep_update(readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value])
+    self.chemicals[Network.WATER_LEFT].prep_update(readings[Sides.LEFT.value][EnvObjectTypes.WATER.value])
+    self.chemicals[Network.WATER_RIGHT].prep_update(readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value])
     # set reaction changes
     for reaction in self.reactions:
       reaction.prep_update()
-    
-    self.chemicals[Network.FOOD_LEFT].dconc = (-self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value])*25
-    self.chemicals[Network.FOOD_RIGHT].dconc = (-self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value])*25
-    self.chemicals[Network.WATER_LEFT].dconc = (-self.chemicals[Network.WATER_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.WATER.value])*25
-    self.chemicals[Network.WATER_RIGHT].dconc = (-self.chemicals[Network.WATER_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value])*25
-
+    # update chemicals
     for chemical in self.chemicals:
       chemical.update()
-        
-    return self.chemicals[Network.OUTPUT_LEFT].conc / 25, self.chemicals[Network.OUTPUT_RIGHT].conc / 25
+    
+    return self.chemicals[Network.OUTPUT_LEFT].conc, self.chemicals[Network.OUTPUT_RIGHT].conc
 
   def mutate(self):
     for chemical in self.chemicals:

@@ -5,7 +5,6 @@ from Network import Network
 from graphviz import Digraph
 from globals import DT
 
-
 def find_nearest(animat, env):
   for type in EnvObjectTypes:
     min_dsq = math.inf
@@ -19,7 +18,7 @@ def find_nearest(animat, env):
 def get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient):
 
   # larger falloff means farther sight
-  falloff = 0.5
+  falloff = 0.25
 
   d_sq = (sens_x - obj_x)**2 + (sens_y - obj_y)**2
 
@@ -94,7 +93,7 @@ class Animat:
         obj_x = self.nearest[type.value].x
         obj_y = self.nearest[type.value].y
         reading = get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient)
-        readings[side.value][type.value] = reading * DT
+        readings[side.value][type.value] = reading * DT * 100
         self.sens_hist[side.value][type.value].append(reading)
     # get chemical outputs
     left_out, right_out = self.controller.get_outputs(readings)
@@ -106,18 +105,18 @@ class Animat:
     self.motor_hist[Sides.RIGHT.value].append(right_motor_state)
     # calculate derivs
     mag = (left_motor_state + right_motor_state) / 2
-    self.dx = mag * math.cos(self.theta) * DT
-    self.dy = mag * math.sin(self.theta) * DT
-    self.dtheta = (right_motor_state - left_motor_state) / Animat.RADIUS * DT
+    self.dx = mag * math.cos(self.theta)
+    self.dy = mag * math.sin(self.theta)
+    self.dtheta = (right_motor_state - left_motor_state) / Animat.RADIUS
 
 
   def update(self, env):
     # update position and orientation
-    self.x += self.dx
+    self.x += self.dx * DT
     self.x_hist.append(self.x)
-    self.y += self.dy
+    self.y += self.dy * DT
     self.y_hist.append(self.y)
-    self.theta += self.dtheta
+    self.theta += self.dtheta * DT
     # check if encountered any objects
     encountered = False
     for type in EnvObjectTypes:
@@ -132,11 +131,12 @@ class Animat:
     if not encountered:
       self.battery = [max(0, bat - Animat.DRAIN_RATE*DT) for bat in self.battery]
     # update battery and env
-    self.fitness += sum(self.battery)
+    self.fitness += sum(self.battery) * DT * 10
     self.battery_hist[EnvObjectTypes.FOOD.value].append(self.battery[EnvObjectTypes.FOOD.value])
     self.battery_hist[EnvObjectTypes.WATER.value].append(self.battery[EnvObjectTypes.WATER.value])
 
-    if any(b <= 0 for b in self.battery):
+    # if any(b <= 0 for b in self.battery):
+    if sum(self.battery) <= 0:
       self.alive = False
 
 
@@ -168,7 +168,7 @@ class Animat:
         dot.edge(str(rxn), rhs_chem.formula)
 
     dot.format = 'png'
-    dot.render('graph')
+    dot.render('plot_graph')
 
 
 def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
@@ -227,7 +227,7 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
   ax3.legend()
 
   if save:
-    plt.savefig(f'best_animat{fname}')
+    plt.savefig(f'plot_best_animat{fname}')
   if show:
     plt.show()
 
