@@ -94,7 +94,7 @@ class Animat:
         obj_x = self.nearest[type.value].x
         obj_y = self.nearest[type.value].y
         reading = get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient)
-        readings[side.value][type.value] = reading
+        readings[side.value][type.value] = reading * DT
         self.sens_hist[side.value][type.value].append(reading)
     # get chemical outputs
     left_out, right_out = self.controller.get_outputs(readings, self.battery)

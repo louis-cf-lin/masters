@@ -5,7 +5,7 @@ from Animat import Animat, test_animat_trial
 
 if __name__ == '__main__':
 
-  GENS = 2000
+  GENS = 100
 
   highest_fitness = 0
   pop = Population()
