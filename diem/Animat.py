@@ -97,7 +97,7 @@ class Animat:
         readings[side.value][type.value] = reading * DT
         self.sens_hist[side.value][type.value].append(reading)
     # get chemical outputs
-    left_out, right_out = self.controller.get_outputs(readings, self.battery)
+    left_out, right_out = self.controller.get_outputs(readings)
     
     # set motor state
     left_motor_state = min(1.0, left_out)

@@ -1,25 +1,24 @@
 // chem
 digraph {
-	001 [label=<<b>OUT LEFT</b><br/>001> fillcolor=gold fontsize=10 shape=rectangle style=filled]
-	0001 [label=<<b>OUT RIGHT</b><br/>0001> fillcolor=gold fontsize=10 shape=rectangle style=filled]
-	00 [label=<<b>FOOD LEFT</b><br/>00> fillcolor=gold fontsize=10 shape=rectangle style=filled]
-	01 [label=<<b>FOOD RIGHT</b><br/>01> fillcolor=gold fontsize=10 shape=rectangle style=filled]
-	0111 [label=<<b>WATER LEFT</b><br/>0111> fillcolor=gold fontsize=10 shape=rectangle style=filled]
+	0 [label=<<b>OUT LEFT</b><br/>0> fillcolor=gold fontsize=10 shape=rectangle style=filled]
+	1111 [label=<<b>OUT RIGHT</b><br/>1111> fillcolor=gold fontsize=10 shape=rectangle style=filled]
+	0011 [label=<<b>FOOD LEFT</b><br/>0011> fillcolor=gold fontsize=10 shape=rectangle style=filled]
+	001 [label=<<b>FOOD RIGHT</b><br/>001> fillcolor=gold fontsize=10 shape=rectangle style=filled]
+	1 [label=<<b>WATER LEFT</b><br/>1> fillcolor=gold fontsize=10 shape=rectangle style=filled]
 	011 [label=<<b>WATER RIGHT</b><br/>011> fillcolor=gold fontsize=10 shape=rectangle style=filled]
-	0011 [label=<0011> fontsize=10 shape=rectangle]
-	"[01]+[001]↔[011]+[00]" [label=<<b>[01]+[001]↔[011]+[00]</b><br/>> fontsize=10 shape=plaintext]
-	"[01]+[001]↔[011]+[00]" -> 01
-	"[01]+[001]↔[011]+[00]" -> 001
-	"[01]+[001]↔[011]+[00]" -> 011
-	"[01]+[001]↔[011]+[00]" -> 00
-	"[001]+[001]↔[01]+[0001]" [label=<<b>[001]+[001]↔[01]+[0001]</b><br/>> fontsize=10 shape=plaintext]
-	"[001]+[001]↔[01]+[0001]" -> 001
-	"[001]+[001]↔[01]+[0001]" -> 001
-	"[001]+[001]↔[01]+[0001]" -> 01
-	"[001]+[001]↔[01]+[0001]" -> 0001
-	"[0011]+[0011]↔[0001]+[0111]" [label=<<b>[0011]+[0011]↔[0001]+[0111]</b><br/>> fontsize=10 shape=plaintext]
-	"[0011]+[0011]↔[0001]+[0111]" -> 0011
-	"[0011]+[0011]↔[0001]+[0111]" -> 0011
-	"[0011]+[0011]↔[0001]+[0111]" -> 0001
-	"[0011]+[0011]↔[0001]+[0111]" -> 0111
+	000 [label=<000> fontsize=10 shape=rectangle]
+	01 [label=<01> fontsize=10 shape=rectangle]
+	"[011]+[000]↔[001]+[001]" [label=<<b>[011]+[000]↔[001]+[001]</b><br/>> fontsize=10 shape=plaintext]
+	"[011]+[000]↔[001]+[001]" -> 011
+	"[011]+[000]↔[001]+[001]" -> 000
+	"[011]+[000]↔[001]+[001]" -> 001
+	"[011]+[000]↔[001]+[001]" -> 001
+	"[01]↔[0]+[1]" [label=<<b>[01]↔[0]+[1]</b><br/>> fontsize=10 shape=plaintext]
+	"[01]↔[0]+[1]" -> 01
+	"[01]↔[0]+[1]" -> 0
+	"[01]↔[0]+[1]" -> 1
+	"[0011]↔[1]+[001]" [label=<<b>[0011]↔[1]+[001]</b><br/>> fontsize=10 shape=plaintext]
+	"[0011]↔[1]+[001]" -> 0011
+	"[0011]↔[1]+[001]" -> 1
+	"[0011]↔[1]+[001]" -> 001
 }

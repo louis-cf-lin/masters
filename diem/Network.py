@@ -58,8 +58,10 @@ class Chemical:
   def __str__(self):
     return self.formula    
 
-  def prep_update(self):
+  def prep_update(self, reading=None):
     self.dconc = -self.decay*self.conc
+    if not reading == None:
+      self.dconc += reading
 
   def update(self):
     self.conc = min(Chemical.CONC_MAX, max(0.0, self.conc + self.dconc*DT*25))
@@ -82,20 +84,16 @@ class Reaction:
     self.lhs = lhs
     self.rhs = rhs
     self.fav_rate = NETWORK_RNG.random() * Reaction.INIT_FAV_RATE_MAX
-    self.battery = (NETWORK_RNG.random() < 0.5).real
-    self.slope = NETWORK_RNG.random() * Reaction.SLOPE_MAX
 
     # unfavoured rate = favoured rate * e^(-R+P)
-    self.mu_lhs = sum([lhs.potential for lhs in self.lhs])
-    self.mu_rhs = sum([rhs.potential for rhs in self.rhs])
-    if self.mu_lhs > self.mu_rhs:
-      # self.forward = self.fav_rate
-      self.forward_favoured = True
-      # self.backward = self.fav_rate * (np.e ** (-mu_lhs+mu_rhs))
+    mu_lhs = sum([lhs.potential for lhs in self.lhs])
+    mu_rhs = sum([rhs.potential for rhs in self.rhs])
+    if mu_lhs > mu_rhs:
+      self.forward = self.fav_rate
+      self.backward = self.fav_rate * (np.e ** (-mu_lhs+mu_rhs))
     else:
-      # self.backward = self.fav_rate
-      self.forward_favoured = False
-      # self.forward = self.fav_rate * (np.e ** (-mu_rhs+mu_lhs))
+      self.backward = self.fav_rate
+      self.forward = self.fav_rate * (np.e ** (-mu_rhs+mu_lhs))
   
   def __eq__(self, other):
     return np.array_equal(self.lhs, other.lhs) and np.array_equal(self.rhs, other.rhs) and self.forward == other.forward and self.backward == other.backward
@@ -106,37 +104,27 @@ class Reaction:
   def __str__(self):
     return '+'.join([f'[{chem.formula}]' for chem in self.lhs]) + '↔' + '+'.join([f'[{chem.formula}]' for chem in self.rhs])
   
-  def prep_update(self, batteries):
+  def prep_update(self):
     lhs_product = reduce(lambda x, y: x*y, [chemical.conc for chemical in self.lhs])
     rhs_product = reduce(lambda x, y: x*y, [chemical.conc for chemical in self.rhs])
-
-    if self.forward_favoured:
-      forward = self.fav_rate + (self.fav_rate * (( batteries[self.battery] - 0.5 / 0.5) * self.slope))
-      backward = forward * (np.e ** (-self.mu_rhs + self.mu_lhs))
-    else:
-      backward = self.fav_rate + (self.fav_rate * (( batteries[self.battery] - 0.5 / 0.5) * self.slope))
-      forward = backward * (np.e ** (-self.mu_rhs + self.mu_lhs))
     
     for chemical in self.lhs:
-      chemical.dconc += rhs_product*backward - lhs_product*forward
+      chemical.dconc += rhs_product*self.backward - lhs_product*self.forward
     for chemical in self.rhs:
-      chemical.dconc += lhs_product*forward - rhs_product*backward
+      chemical.dconc += lhs_product*self.forward - rhs_product*self.backward
 
   def mutate(self):
     self.fav_rate = add_noise(self.fav_rate, Reaction.FAV_RATE_MAX)
-    self.slope = add_noise(self.slope, Reaction.SLOPE_MAX)
-    self.mu_lhs = sum([lhs.potential for lhs in self.lhs])
-    self.mu_rhs = sum([rhs.potential for rhs in self.rhs])
-    if self.mu_lhs > self.mu_rhs:
-      # self.forward = self.fav_rate
-      self.forward_favoured = True
-      # self.backward = self.fav_rate * (np.e ** (-mu_lhs+mu_rhs))
+
+    mu_lhs = sum([lhs.potential for lhs in self.lhs])
+    mu_rhs = sum([rhs.potential for rhs in self.rhs])
+    if mu_lhs > mu_rhs:
+      self.forward = self.fav_rate
+      self.backward = self.fav_rate * (np.e ** (-mu_lhs+mu_rhs))
     else:
-      # self.backward = self.fav_rate
-      self.forward_favoured = True
-      # self.forward = self.fav_rate * (np.e ** (-mu_rhs+mu_lhs))
-    if NETWORK_RNG.random() < MUTATION_RATE:
-      self.battery = (1,0)[self.battery]
+      self.backward = self.fav_rate
+      self.forward = self.fav_rate * (np.e ** (-mu_rhs+mu_lhs))
+
 
 class Network:
 
@@ -227,25 +215,20 @@ class Network:
       self.reactions.append(Reaction(lhs, np.array(rhs)))
     return 
   
-  def get_outputs(self, readings, batteries):
+  def get_outputs(self, readings):
+
+    # set decay
     for chemical in self.chemicals:
       chemical.prep_update()
 
+    # set reaction changes
     for reaction in self.reactions:
-      reaction.prep_update(batteries)
+      reaction.prep_update()
     
-    self.chemicals[Network.FOOD_LEFT].dconc = \
-      (-self.chemicals[Network.FOOD_LEFT].conc 
-        + readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value]) * 25
-    self.chemicals[Network.FOOD_RIGHT].dconc = \
-      (-self.chemicals[Network.FOOD_RIGHT].conc
-        + readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value]) * 25
-    self.chemicals[Network.WATER_LEFT].dconc = \
-      (-self.chemicals[Network.WATER_LEFT].conc
-        + readings[Sides.LEFT.value][EnvObjectTypes.WATER.value]) * 25
-    self.chemicals[Network.WATER_RIGHT].dconc = \
-      (-self.chemicals[Network.WATER_RIGHT].conc
-        + readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value]) * 25
+    self.chemicals[Network.FOOD_LEFT].dconc = (-self.chemicals[Network.FOOD_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value])*25
+    self.chemicals[Network.FOOD_RIGHT].dconc = (-self.chemicals[Network.FOOD_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value])*25
+    self.chemicals[Network.WATER_LEFT].dconc = (-self.chemicals[Network.WATER_LEFT].conc + readings[Sides.LEFT.value][EnvObjectTypes.WATER.value])*25
+    self.chemicals[Network.WATER_RIGHT].dconc = (-self.chemicals[Network.WATER_RIGHT].conc + readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value])*25
 
     for chemical in self.chemicals:
       chemical.update()
