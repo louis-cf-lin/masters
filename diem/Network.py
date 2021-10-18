@@ -3,7 +3,7 @@ from Sides import Sides
 from collections import Counter
 import copy
 import numpy as np
-from Env import EnvObjectTypes
+from Env import ConsumableTypes, EnvObjectTypes
 from globals import DT, AGGREGATION, MUTATION_RATE
 
 
@@ -125,7 +125,7 @@ class Reaction:
 
 class Network:
 
-  N_INIT_CHEMICALS = 6
+  N_INIT_CHEMICALS = 4
   N_INIT_REACTIONS = 4
 
   OUTPUT_LEFT = 0
@@ -216,17 +216,24 @@ class Network:
     # set decay
     for chemical in self.chemicals:
       chemical.prep_update()
+
+    # TODO uncomment if using natural dconc for inputs
     # add sensor inputs
-    self.chemicals[Network.FOOD_LEFT].prep_update(readings[Sides.LEFT.value][EnvObjectTypes.FOOD.value])
-    self.chemicals[Network.FOOD_RIGHT].prep_update(readings[Sides.RIGHT.value][EnvObjectTypes.FOOD.value])
-    self.chemicals[Network.WATER_LEFT].prep_update(readings[Sides.LEFT.value][EnvObjectTypes.WATER.value])
-    self.chemicals[Network.WATER_RIGHT].prep_update(readings[Sides.RIGHT.value][EnvObjectTypes.WATER.value])
+    # for type in EnvObjectTypes:
+    #   for side in Sides:
+    #     self.chemicals[getattr(Network, f'{type.name}_{side.name}')].prep_update(readings[side.value][type.value])
+
     # set reaction changes
     for reaction in self.reactions:
       reaction.prep_update()
     # update chemicals
     for chemical in self.chemicals:
       chemical.update()
+    
+    # TODO uncomment if using natural dconc for inputs
+    for type in EnvObjectTypes:
+      for side in Sides:
+        self.chemicals[getattr(Network, f'{type.name}_{side.name}')].conc = readings[side.value][type.value]
     
     return self.chemicals[Network.OUTPUT_LEFT].conc, self.chemicals[Network.OUTPUT_RIGHT].conc
 

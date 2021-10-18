@@ -20,7 +20,7 @@ if __name__ == '__main__':
       gen = batch * BATCH_SIZE + repeat
       print(gen)
       max[gen], mean[gen], min[gen], best = pop.eval(batch)
-      if best.fitness > highest_fitness + 0.01:
+      if best.fitness > highest_fitness + 0.0001:
         highest_fitness = best.fitness
         test_animat_trial(env=Env(batch), controller=best.controller.deep_copy(), show=False, save=True, fname=batch)
       pop.evolve()

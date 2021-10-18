@@ -3,8 +3,12 @@ from enum import Enum
 
 class EnvObjectTypes(Enum):
   FOOD = 0
-  WATER = 1
+  # WATER = 1
   # TRAP = 2
+
+class ConsumableTypes(Enum):
+  FOOD = 0
+  # WATER = 1
 
 class EnvObject:
 
@@ -38,7 +42,7 @@ class Env:
   MAX_Y = 0.5
   MIN_X = -0.5
   MIN_Y = -0.5
-  N_OBJECTS = [2, 2, 0]
+  N_OBJECTS = [2, 0, 0]
 
   def __init__(self, rstate):
     self.rstate = np.random.default_rng(rstate)

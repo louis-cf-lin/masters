@@ -1,6 +1,6 @@
 import math, numpy as np, matplotlib.pyplot as plt, copy
 from Sides import Sides
-from Env import EnvObjectTypes, Env
+from Env import EnvObjectTypes, ConsumableTypes, Env
 from Network import Network
 from graphviz import Digraph
 from globals import DT
@@ -54,7 +54,7 @@ class Animat:
     self.nearest = [None for _ in EnvObjectTypes]
     self.dsq = [None for _ in EnvObjectTypes]
     self.motor_hist = [[] for _ in Sides]
-    self.sens_hist = [[[] for _ in EnvObjectTypes] for _ in Sides]
+    self.sens_hist = [[[] for _ in ConsumableTypes] for _ in Sides]
     self.dx = None
     self.dy = None
     self.dtheta = None
@@ -124,7 +124,7 @@ class Animat:
         encountered = copy.deepcopy(self.nearest[type.value])
         env.consumed.append(encountered)
         self.nearest[type.value].reset()
-        if encountered.type == 'FOOD' or encountered.type == 'WATER':
+        if any(encountered.type == type.name for type in ConsumableTypes):
           self.battery[type.value] = Animat.FULL_BATTERY
         else:
           self.battery = [0, 0]
@@ -132,9 +132,10 @@ class Animat:
       self.battery = [max(0, bat - Animat.DRAIN_RATE*DT) for bat in self.battery]
     # update battery and env
     self.fitness += sum(self.battery) * DT * 10
-    self.battery_hist[EnvObjectTypes.FOOD.value].append(self.battery[EnvObjectTypes.FOOD.value])
-    self.battery_hist[EnvObjectTypes.WATER.value].append(self.battery[EnvObjectTypes.WATER.value])
+    for type in ConsumableTypes:
+      self.battery_hist[type.value].append(self.battery[type.value])
 
+    # TODO toggle dual battery
     # if any(b <= 0 for b in self.battery):
     if sum(self.battery) <= 0:
       self.alive = False
@@ -188,33 +189,33 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
 
   animat.evaluate(env)
 
-  
   ax.plot(animat.x_hist, animat.y_hist, 'ko', ms=1, alpha=0.5)
   ax.plot(animat.x_hist, animat.y_hist, ms=1, alpha=0.1)
   ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
   env.plot()
 
   multiplots = plots[1].subfigures(2,2)
+  type_colors = ['g', 'b']
+  side_colors = ['r', 'c']
 
   ax0 = multiplots[0][0].subplots()
   ax0.set_title('Battery')
-  ax0.plot(animat.battery_hist[EnvObjectTypes.FOOD.value], color='g')
-  ax0.plot(animat.battery_hist[EnvObjectTypes.WATER.value], color='b')
-
+  for type in ConsumableTypes:
+    ax0.plot(animat.battery_hist[type.value], color=type_colors[type.value])
+    
   ax1 = multiplots[0][1].subplots(2,1)
   ax1[0].set_title('Left sensors')
-  ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.FOOD.value], color='g')
-  ax1[0].plot(animat.sens_hist[Sides.LEFT.value][EnvObjectTypes.WATER.value], color='b')
   ax1[1].set_title('Right sensors')
-  ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.FOOD.value], color='g')
-  ax1[1].plot(animat.sens_hist[Sides.RIGHT.value][EnvObjectTypes.WATER.value], color='b')
+  for side in Sides:
+    for type in EnvObjectTypes:
+      ax1[side.value].plot(animat.sens_hist[side.value][type.value], color=type_colors[type.value])
   
   ax2 = multiplots[1][0].subplots(2,1)
   ax2[0].set_title('Left motor')
-  ax2[0].plot(animat.motor_hist[Sides.LEFT.value], color='r')
   ax2[1].set_title('Right motor')
-  ax2[1].plot(animat.motor_hist[Sides.RIGHT.value], color='g')
-  
+  for side in Sides:
+    ax2[side.value].plot(animat.motor_hist[side.value], color=side_colors[side.value])
+      
   ax3 = multiplots[1][1].subplots()
   ax3.set_title('Chemical concentrations')
   color = ['r','g','b','c','m','y']
