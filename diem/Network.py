@@ -3,7 +3,7 @@ from Sides import Sides
 from collections import Counter
 import copy
 import numpy as np
-from Env import ConsumableTypes, EnvObjectTypes
+from Env import EnvObjectTypes
 from globals import DT, AGGREGATION, MUTATION_RATE
 
 
@@ -18,8 +18,7 @@ def rand_formula(min_len = 4, max_len = 4):
 
 def add_noise(value, max):
   if NETWORK_RNG.random() < MUTATION_RATE:
-    value += NETWORK_RNG.normal(loc=0, scale=max*MUTATION_RATE) 
-    return max - abs(value % (2*max) - max)
+    return max - abs((value + NETWORK_RNG.normal(loc=0, scale=max*MUTATION_RATE)) % (2*max) - max)
   else:
     return value
 
@@ -62,7 +61,9 @@ class Chemical:
       self.dconc += reading
 
   def update(self):
-    self.conc += self.dconc * DT
+    if (self.dconc > 100 or self.dconc < -100):
+      print('pause')
+    self.conc = max(0.0, self.conc + self.dconc * DT)
     self.hist.append(self.conc)
 
   def mutate(self):
@@ -126,7 +127,7 @@ class Reaction:
 class Network:
 
   N_INIT_CHEMICALS = 4
-  N_INIT_REACTIONS = 4
+  N_INIT_REACTIONS = 6
 
   OUTPUT_LEFT = 0
   OUTPUT_RIGHT = 1
@@ -233,7 +234,7 @@ class Network:
     # TODO uncomment if using natural dconc for inputs
     for type in EnvObjectTypes:
       for side in Sides:
-        self.chemicals[getattr(Network, f'{type.name}_{side.name}')].conc = readings[side.value][type.value]
+        self.chemicals[getattr(Network, f'{type.name}_{side.name}')].conc = readings[side.value][type.value] * 2
     
     return self.chemicals[Network.OUTPUT_LEFT].conc, self.chemicals[Network.OUTPUT_RIGHT].conc
 
@@ -256,30 +257,30 @@ class Network:
   def print_derivs(self):
     derivs = {}
 
-    # for chemical in self.chemicals:
-    #   derivs[chemical.formula] = f"-{chemical.decay:.2f}"
+    for chemical in self.chemicals:
+      derivs[chemical.formula] = f"-{chemical.decay:.2f}[{chemical.formula}]"
 
-    # for reaction in self.reactions:
-    #   for chem in reaction.lhs:
-    #     derivs[chem.formula] += f" + {reaction.backward:.2f}"
-    #     for rhs_chem in reaction.rhs:
-    #       derivs[chem.formula] += f"[{rhs_chem}]"
+    for reaction in self.reactions:
+      for chem in reaction.lhs:
+        derivs[chem.formula] += f" + {reaction.backward:.2f}"
+        for rhs_chem in reaction.rhs:
+          derivs[chem.formula] += f"[{rhs_chem}]"
         
-    #     derivs[chem.formula] += f" - {reaction.forward:.2f}"
-    #     for lhs_chem in reaction.lhs:
-    #       derivs[chem.formula] += f"[{lhs_chem}]"
+        derivs[chem.formula] += f" - {reaction.forward:.2f}"
+        for lhs_chem in reaction.lhs:
+          derivs[chem.formula] += f"[{lhs_chem}]"
 
-    #   for chem in reaction.rhs:
-    #     derivs[chem.formula] += f" + {reaction.forward:.2f}"
-    #     for lhs_chem in reaction.lhs:
-    #       derivs[chem.formula] += f"[{lhs_chem}]"
+      for chem in reaction.rhs:
+        derivs[chem.formula] += f" + {reaction.forward:.2f}"
+        for lhs_chem in reaction.lhs:
+          derivs[chem.formula] += f"[{lhs_chem}]"
         
-    #     derivs[chem.formula] += f" - {reaction.backward:.2f}"
-    #     for rhs_chem in reaction.rhs:
-    #       derivs[chem.formula] += f"[{rhs_chem}]"
+        derivs[chem.formula] += f" - {reaction.backward:.2f}"
+        for rhs_chem in reaction.rhs:
+          derivs[chem.formula] += f"[{rhs_chem}]"
 
-    # for chemical, exp in derivs.items():
-    #   print(f"{chemical}: {exp}")
+    for chemical, exp in derivs.items():
+      print(f"{chemical}: {exp}")
 
 
 if __name__ == '__main__':

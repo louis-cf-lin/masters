@@ -18,7 +18,7 @@ def find_nearest(animat, env):
 def get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient):
 
   # larger falloff means farther sight
-  falloff = 0.5
+  falloff = 0.25
 
   d_sq = (sens_x - obj_x)**2 + (sens_y - obj_y)**2
 
@@ -219,7 +219,7 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
   ax3 = multiplots[1][1].subplots()
   ax3.set_title('Chemical concentrations')
   color = ['r','g','b','c','m','y']
-  labels = ['Out L','Out R','Food L','Food R','Water L','Water R']
+  labels = ['Out L','Out R','Food L','Food R']
   for (i, chemical) in enumerate(animat.controller.chemicals):
     if i < len(labels):
       ax3.plot(chemical.hist, label=f'{labels[i]} ({chemical.formula})', c=color[i], zorder=1)
@@ -232,7 +232,7 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
   if show:
     plt.show()
 
-  animat.controller.print_derivs()
+  # animat.controller.print_derivs()
 
   print(f'Score is {animat.fitness}')
 
@@ -245,9 +245,24 @@ if __name__ == '__main__':
 
   np.set_printoptions(precision=5)
 
-  z = np.zeros((100,100))
+  X = -0.25
+  Y = -0.25
+  theta = math.pi/4
+
+  values = np.zeros((100,100))
   xs = np.linspace(Env.MIN_X, Env.MAX_X, 100)
   ys = np.linspace(Env.MIN_Y, Env.MAX_Y, 100)
+
+  fig, ax = plt.subplots()
+  for i, x in enumerate(xs):
+    for j, y in enumerate(ys):
+      values[i][j] = get_sens_reading(x, y, X, Y, theta)
+  # ax.arrow(X, Y, math.cos(theta), math.sin(theta), color='red', head_width=1, head_length=1)
+  im = ax.imshow(values)
+  ax.invert_yaxis()
+  fig.colorbar(im)
+  plt.show()
+
   
 
 
