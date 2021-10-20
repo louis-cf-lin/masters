@@ -64,7 +64,7 @@ class Chemical:
     if (self.dconc > 100 or self.dconc < -100):
       print('pause')
     self.conc = max(0.0, self.conc + self.dconc * DT)
-    self.hist.append(self.conc)
+    self.hist.append(self.conc)    
 
   def mutate(self):
     self.potential = add_noise(self.potential, Chemical.POTENTIAL_MAX)
