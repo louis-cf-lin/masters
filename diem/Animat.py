@@ -99,8 +99,8 @@ class Animat:
     left_out, right_out = self.controller.get_outputs(readings)
     
     # set motor state
-    left_motor_state = min(1.0, left_out)
-    right_motor_state = min(1.0, right_out)
+    left_motor_state = left_out
+    right_motor_state = right_out
     self.motor_hist[Sides.LEFT.value].append(left_motor_state)
     self.motor_hist[Sides.RIGHT.value].append(right_motor_state)
     # calculate derivs
