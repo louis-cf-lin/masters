@@ -6,7 +6,7 @@ from Animat import test_animat_trial
 if __name__ == '__main__':
 
   BATCHES = 1
-  BATCH_SIZE = 150
+  BATCH_SIZE = 300
 
   highest_fitness = 0
   pop = Population()
@@ -22,6 +22,7 @@ if __name__ == '__main__':
       max[gen], mean[gen], min[gen], best = pop.eval(batch)
       if best.fitness > highest_fitness + 0.0001:
         highest_fitness = best.fitness
+        plt.close('all')
         test_animat_trial(env=Env(batch), controller=best.controller.deep_copy(), show=False, save=True, fname=batch)
       pop.evolve()
 

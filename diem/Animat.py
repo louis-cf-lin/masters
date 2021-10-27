@@ -1,4 +1,5 @@
 import math, numpy as np, matplotlib.pyplot as plt, copy
+from collections import OrderedDict
 from Sides import Sides
 from Env import EnvObjectTypes, ConsumableTypes, Env
 from Network import Network
@@ -178,57 +179,84 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
     animat = Animat()
   else:
     animat = Animat(controller)
-    
-  fig = plt.figure(constrained_layout=True, figsize=(16,8))
-  plots = fig.subfigures(1, 2)
-  ax = plots[0].subplots()
-  ax.set_aspect('equal')
-  # ax.set_xlim(Env.MIN_X, Env.MAX_X)
-  # ax.set_ylim(Env.MIN_Y, Env.MAX_Y)
-  ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black', fill=False))
-
   animat.evaluate(env)
 
-  ax.plot(animat.x_hist, animat.y_hist, 'ko', ms=1, alpha=0.5)
-  ax.plot(animat.x_hist, animat.y_hist, ms=1, alpha=0.1)
-  ax.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
-  env.plot()
-
-  multiplots = plots[1].subfigures(2,2)
-  type_colors = ['g', 'b']
-  side_colors = ['r', 'c']
-
-  ax0 = multiplots[0][0].subplots()
-  ax0.set_title('Battery')
-  for type in ConsumableTypes:
-    ax0.plot(animat.battery_hist[type.value], color=type_colors[type.value])
-    
-  ax1 = multiplots[0][1].subplots(2,1)
-  ax1[0].set_title('Left sensors')
-  ax1[1].set_title('Right sensors')
+  type_colors = ['g', 'b', 'r']
+  sens_motor_subs = plt.figure(constrained_layout=True, figsize=(9,6)).subplots(2, 1)
+  sens_motor_subs[0].set_title('Left')
+  sens_motor_subs[1].set_title('Right')
   for side in Sides:
     for type in EnvObjectTypes:
-      ax1[side.value].plot(animat.sens_hist[side.value][type.value], color=type_colors[type.value])
-  
-  ax2 = multiplots[1][0].subplots(2,1)
-  ax2[0].set_title('Left motor')
-  ax2[1].set_title('Right motor')
-  for side in Sides:
-    ax2[side.value].plot(animat.motor_hist[side.value], color=side_colors[side.value])
-      
-  ax3 = multiplots[1][1].subplots()
-  ax3.set_title('Chemical concentrations')
-  color = ['r','g','b','c','m','y']
-  labels = ['Out L','Out R','Food L','Food R']
-  for (i, chemical) in enumerate(animat.controller.chemicals):
-    if i < len(labels):
-      ax3.plot(chemical.hist, label=f'{labels[i]} ({chemical.formula})', c=color[i], zorder=1)
-    else:
-      ax3.plot(chemical.hist, ':', label=chemical.formula, c='black', alpha=0.25, zorder=0)
-  ax3.legend()
+      sens_motor_subs[side.value].plot(animat.sens_hist[side.value][type.value], ':', label=f'{type.name} SENSOR', color=type_colors[type.value])
+    sens_motor_subs[side.value].plot(animat.motor_hist[side.value], label=f'MOTOR', color='grey')
+    sens_motor_subs[side.value].legend()
 
   if save:
-    plt.savefig(f'plot_best_animat{fname}')
+    plt.savefig(f'plot_sensorimotors_{fname}')
+
+  chem_colors = ['darkorange','navajowhite','darkgreen','limegreen','darkblue','blue']
+  chem_labels = ['Out L','Out R','Food L','Food R']
+  chem = plt.figure(constrained_layout=True, figsize=(12,6)).subplots(2, 1)
+  chem[0].set_title('Chemical concentrations')
+  chem[1].set_title('Energy')
+  total_chem = np.zeros(len(animat.controller.chemicals[0].hist))
+  total_energy = np.zeros(len(animat.controller.chemicals[0].hist))
+  for (i, chemical) in enumerate(animat.controller.chemicals):
+    hist = chemical.hist
+    energy = np.array(hist) * chemical.potential
+    if i < len(chem_labels):
+      kwargs = { 'label': f'{chem_labels[i]} ({chemical.formula})', 'c': chem_colors[i], 'alpha': 0.75, 'zorder': 1 }
+    else: 
+      kwargs = { 'ls': ':', 'label': 'Other', 'c': 'black', 'alpha': 0.2, 'zorder': 0 }
+    chem[0].plot(hist, **kwargs)
+    chem[1].plot(energy, **kwargs)
+    total_chem += hist
+    total_energy += energy
+
+  for type in EnvObjectTypes:
+    for side in Sides:
+      input_chem = animat.controller.chemicals[getattr(Network, f'{type.name}_{side.name}')]
+      total_chem -= input_chem.hist
+      total_energy -= np.array(input_chem.hist) * input_chem.potential
+
+  chem[0].set_ylabel('Chemical concs')
+  total_chem_plot = chem[0].twinx()
+  total_chem_plot.plot(total_chem, c='darkviolet')
+  total_chem_plot.set_ylabel('Total concs', color='darkviolet')  
+
+  chem[1].set_ylabel('Energy')
+  total_energy_plot = chem[1].twinx()
+  total_energy_plot.plot(total_energy, c='darkviolet')
+  total_energy_plot.set_ylabel('Total energy', color='darkviolet')
+
+  handles, labels = chem[0].get_legend_handles_labels()
+  by_label = OrderedDict(zip(labels, handles))
+  chem[0].legend(by_label.values(), by_label.keys())
+  chem[1].legend(by_label.values(), by_label.keys())
+  
+
+  if save:
+    plt.savefig(f'plot_chems_{fname}')
+
+  lifetime = plt.figure(constrained_layout=True, figsize=(10,5)).subplots(1,2)
+
+  lifetime[0].set_title('Trajectory')
+  lifetime[0].set_aspect('equal')
+  lifetime[0].set_xlim(Env.MIN_X, Env.MAX_X)
+  lifetime[0].set_ylim(Env.MIN_Y, Env.MAX_Y)
+  lifetime[0].plot(animat.x_hist, animat.y_hist, 'ko', ms=1, alpha=0.5)
+  lifetime[0].plot(animat.x_hist, animat.y_hist, ms=1, alpha=0.1)
+  lifetime[0].add_patch(plt.Circle((animat.x_hist[0], animat.y_hist[0]), Animat.RADIUS, color='black', fill=False))
+  lifetime[0].add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
+  env.plot(lifetime[0])
+
+  lifetime[1].set_title('Battery')
+  for type in ConsumableTypes:
+    lifetime[1].plot(animat.battery_hist[type.value], color=type_colors[type.value])
+
+  if save:
+    plt.savefig(f'plot_lifetime_{fname}')
+
   if show:
     plt.show()
 
@@ -245,25 +273,27 @@ if __name__ == '__main__':
 
   np.set_printoptions(precision=5)
 
-  X = -0.25
-  Y = -0.25
-  theta = math.pi/4
+  # X = -0.25
+  # Y = -0.25
+  # theta = math.pi/4
 
-  values = np.zeros((100,100))
-  xs = np.linspace(Env.MIN_X, Env.MAX_X, 100)
-  ys = np.linspace(Env.MIN_Y, Env.MAX_Y, 100)
+  # values = np.zeros((100,100))
+  # xs = np.linspace(Env.MIN_X, Env.MAX_X, 100)
+  # ys = np.linspace(Env.MIN_Y, Env.MAX_Y, 100)
 
-  fig, ax = plt.subplots()
-  for i, x in enumerate(xs):
-    for j, y in enumerate(ys):
-      values[i][j] = get_sens_reading(x, y, X, Y, theta)
-  # ax.arrow(X, Y, math.cos(theta), math.sin(theta), color='red', head_width=1, head_length=1)
-  im = ax.imshow(values)
-  ax.invert_yaxis()
-  fig.colorbar(im)
-  plt.show()
+  # fig, ax = plt.subplots()
+  # for i, x in enumerate(xs):
+  #   for j, y in enumerate(ys):
+  #     values[i][j] = get_sens_reading(x, y, X, Y, theta)
+  # # ax.arrow(X, Y, math.cos(theta), math.sin(theta), color='red', head_width=1, head_length=1)
+  # im = ax.imshow(values)
+  # ax.invert_yaxis()
+  # fig.colorbar(im)
+  # plt.show()
 
-  
+  test_animat_trial(Env(0))
+
+
 
 
 

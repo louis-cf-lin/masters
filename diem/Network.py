@@ -126,7 +126,7 @@ class Reaction:
 
 class Network:
 
-  N_INIT_CHEMICALS = 4
+  N_INIT_CHEMICALS = 6
   N_INIT_REACTIONS = 6
 
   OUTPUT_LEFT = 0
@@ -147,7 +147,7 @@ class Network:
           break
       else:
         self.chemicals.append(Chemical(formula=formula))
-  
+
     self.reactions = []
     for _ in range(Network.N_INIT_REACTIONS):
       self.new_reaction()

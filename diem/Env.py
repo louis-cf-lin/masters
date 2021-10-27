@@ -3,12 +3,12 @@ from enum import Enum
 
 class EnvObjectTypes(Enum):
   FOOD = 0
-  # WATER = 1
+  WATER = 1
   # TRAP = 2
 
 class ConsumableTypes(Enum):
   FOOD = 0
-  # WATER = 1
+  WATER = 1
 
 class EnvObject:
 
@@ -42,20 +42,20 @@ class Env:
   MAX_Y = 0.5
   MIN_X = -0.5
   MIN_Y = -0.5
-  N_OBJECTS = [2, 0, 0]
+  N_OBJECTS = [2, 2, 0]
 
   def __init__(self, rstate):
     self.rstate = np.random.default_rng(rstate)
     self.objects = [ [ EnvObject(type=str(type.name), rstate=self.rstate) for i in range(Env.N_OBJECTS[type.value]) ] for type in EnvObjectTypes ]
     self.consumed = []
   
-  def plot(self):
+  def plot(self, axis):
     colors = ['g', 'b', 'r']
     for type in EnvObjectTypes:
       for object in self.objects[type.value]:
-        plt.gca().add_patch(plt.Circle((object.x, object.y), EnvObject.RADIUS, color=colors[type.value]))
+        axis.add_patch(plt.Circle((object.x, object.y), EnvObject.RADIUS, color=colors[type.value]))
     for object in self.consumed:
-      plt.gca().add_patch(plt.Circle((object.x, object.y), EnvObject.RADIUS, color=colors[EnvObjectTypes[object.type].value], fill=False))
+      axis.add_patch(plt.Circle((object.x, object.y), EnvObject.RADIUS, color=colors[EnvObjectTypes[object.type].value], fill=False))
       
 
 if __name__ == '__main__':
