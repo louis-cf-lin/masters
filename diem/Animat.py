@@ -129,16 +129,16 @@ class Animat:
           self.battery[type.value] = Animat.FULL_BATTERY
         else:
           self.battery = [0, 0]
-    if not encountered:
-      self.battery = [max(0, bat - Animat.DRAIN_RATE*DT) for bat in self.battery]
+      else:
+        self.battery[type.value] -= Animat.DRAIN_RATE*DT
     # update battery and env
-    self.fitness += sum(self.battery) * DT * 10
+    self.fitness += np.prod(self.battery) * DT * 10
     for type in ConsumableTypes:
       self.battery_hist[type.value].append(self.battery[type.value])
 
     # TODO toggle dual battery
-    # if any(b <= 0 for b in self.battery):
-    if sum(self.battery) <= 0:
+    if any(b <= 0 for b in self.battery):
+    # if sum(self.battery) <= 0:
       self.alive = False
 
 
