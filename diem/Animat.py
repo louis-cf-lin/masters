@@ -56,6 +56,7 @@ class Animat:
     self.dsq = [None for _ in EnvObjectTypes]
     self.motor_hist = [[] for _ in Sides]
     self.sens_hist = [[[] for _ in ConsumableTypes] for _ in Sides]
+    self.encountered = []
     self.dx = None
     self.dy = None
     self.dtheta = None
@@ -69,8 +70,8 @@ class Animat:
     self.y_hist = [self.y]
     self.theta = math.pi * 5 / 8
 
-    self.battery = [Animat.FULL_BATTERY, Animat.FULL_BATTERY]
-    self.battery_hist = [[self.battery[0]], [self.battery[1]]]
+    self.battery = [Animat.FULL_BATTERY for _ in ConsumableTypes]
+    self.battery_hist = [[battery] for battery in self.battery]
     self.fitness = 0
     self.alive = True
 
@@ -111,7 +112,7 @@ class Animat:
     self.dtheta = (right_motor_state - left_motor_state) / Animat.RADIUS
 
 
-  def update(self, env):
+  def update(self, env, i):
     # update position and orientation
     self.x += self.dx * DT
     self.x_hist.append(self.x)
@@ -127,10 +128,11 @@ class Animat:
         self.nearest[type.value].reset()
         if any(encountered.type == type.name for type in ConsumableTypes):
           self.battery[type.value] = Animat.FULL_BATTERY
+          self.encountered.append({'time': i, 'type': type.value})
         else:
           self.battery = [0, 0]
       else:
-        self.battery[type.value] -= Animat.DRAIN_RATE*DT
+        self.battery[type.value] = max(0.0, self.battery[type.value] - Animat.DRAIN_RATE*DT)
     # update battery and env
     self.fitness += np.prod(self.battery) * DT * 10
     for type in ConsumableTypes:
@@ -143,9 +145,9 @@ class Animat:
 
 
   def evaluate(self, env):
-    for _ in range(math.floor(Animat.MAX_LIFE / DT)):
+    for i in range(math.floor(Animat.MAX_LIFE / DT)):
       self.prepare(env)
-      self.update(env)
+      self.update(env, i)
       if not self.alive:
         break
 
@@ -170,7 +172,7 @@ class Animat:
         dot.edge(str(rxn), rhs_chem.formula)
 
     dot.format = 'png'
-    dot.render('plot_graph')
+    dot.render('plot-graph')
 
 
 def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
@@ -187,12 +189,15 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
   sens_motor_subs[1].set_title('Right')
   for side in Sides:
     for type in EnvObjectTypes:
-      sens_motor_subs[side.value].plot(animat.sens_hist[side.value][type.value], ':', label=f'{type.name} SENSOR', color=type_colors[type.value])
+      sens_motor_subs[side.value].plot(animat.sens_hist[side.value][type.value], '--', label=f'{type.name} SENSOR', color=type_colors[type.value])
     sens_motor_subs[side.value].plot(animat.motor_hist[side.value], label=f'MOTOR', color='grey')
-    sens_motor_subs[side.value].legend()
+  for encounter in animat.encountered:
+    for side in Sides:
+      sens_motor_subs[side.value].axvline(x=encounter['time'], color=type_colors[encounter['type']], linestyle=':')
+      sens_motor_subs[side.value].legend()
 
   if save:
-    plt.savefig(f'plot_sensorimotors_{fname}')
+    plt.savefig(f'plot-sensorimotors_{fname}')
 
   chem_colors = ['darkorange','navajowhite','darkgreen','limegreen','darkblue','blue']
   chem_labels = ['Out L','Out R','Food L','Food R']
@@ -236,7 +241,7 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
   
 
   if save:
-    plt.savefig(f'plot_chems_{fname}')
+    plt.savefig(f'plot-chems_{fname}')
 
   lifetime = plt.figure(constrained_layout=True, figsize=(10,5)).subplots(1,2)
 
@@ -255,7 +260,7 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
     lifetime[1].plot(animat.battery_hist[type.value], color=type_colors[type.value])
 
   if save:
-    plt.savefig(f'plot_lifetime_{fname}')
+    plt.savefig(f'plot-lifetime_{fname}')
 
   if show:
     plt.show()

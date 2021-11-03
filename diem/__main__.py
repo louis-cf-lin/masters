@@ -6,7 +6,7 @@ from Animat import test_animat_trial
 if __name__ == '__main__':
 
   BATCHES = 1
-  BATCH_SIZE = 1000
+  BATCH_SIZE = 100
 
   highest_fitness = 0
   pop = Population()
@@ -16,6 +16,8 @@ if __name__ == '__main__':
   
   for batch in range(BATCHES):
     highest_fitness = 0
+    fig2, axs2 = plt.subplots(figsize=(8,8))
+
     for repeat in range(BATCH_SIZE):
       gen = batch * BATCH_SIZE + repeat
       print(gen)
@@ -26,23 +28,33 @@ if __name__ == '__main__':
         test_animat_trial(env=Env(batch), controller=best.controller.deep_copy(), show=False, save=True, fname=batch)
       pop.evolve()
 
-  pop.eval(batch)
+    pop.eval(batch)
+    axs2.set_title('Population trajectories')
+    axs2.set_aspect('equal')
+    axs2.set_xlim(Env.MIN_X, Env.MAX_X)
+    axs2.set_ylim(Env.MIN_Y, Env.MAX_Y)
+    for animat in pop.animats:
+      axs2.plot(animat.x_hist, animat.y_hist, 'k-', ms=1, alpha=0.1)
+    fig2.savefig(f'plot-population_{batch}')
 
-  fig, axs = plt.subplots(1, 2, figsize=(16,8))
-  axs[0].set_title('Generational fitness')
-  axs[0].plot(mean)
-  axs[0].plot(max)
-  axs[0].plot(min)
-  axs[0].set_ylabel('Fitness')
-  axs[0].set_xlabel('Generation')
+
+  fig1, axs1 = plt.subplots(figsize=(16,8))
+  axs1.set_title('Generational fitness')
+  axs1.plot(mean)
+  axs1.plot(max)
+  axs1.plot(min)
+  axs1.set_ylabel('Fitness')
+  axs1.set_xlabel('Generation')
+  fig1.savefig('plot-population-fitnesses')
   
-  axs[1].set_title('Population trajectories')
-  axs[1].set_aspect('equal')
-  axs[1].set_xlim(Env.MIN_X, Env.MAX_X)
-  axs[1].set_ylim(Env.MIN_Y, Env.MAX_Y)
-  for animat in pop.animats:
-    axs[1].plot(animat.x_hist, animat.y_hist, 'k-', ms=1, alpha=0.1)
+  # _, axs2 = plt.subplots(figsize=(16,8))
+  # axs2.set_title('Population trajectories')
+  # axs2.set_aspect('equal')
+  # axs2.set_xlim(Env.MIN_X, Env.MAX_X)
+  # axs2.set_ylim(Env.MIN_Y, Env.MAX_Y)
+  # for animat in pop.animats:
+  #   axs2.plot(animat.x_hist, animat.y_hist, 'k-', ms=1, alpha=0.1)
   
-  plt.savefig('plot_population')
+  # plt.savefig('plot_population')
 
   print('stop')

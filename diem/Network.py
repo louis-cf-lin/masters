@@ -236,6 +236,8 @@ class Network:
       for side in Sides:
         self.chemicals[getattr(Network, f'{type.name}_{side.name}')].conc = readings[side.value][type.value] * 2
     
+
+    
     return self.chemicals[Network.OUTPUT_LEFT].conc, self.chemicals[Network.OUTPUT_RIGHT].conc
 
   def mutate(self):
