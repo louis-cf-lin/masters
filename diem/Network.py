@@ -16,9 +16,15 @@ def rand_formula(min_len = 4, max_len = 4):
     formula += str(NETWORK_RNG.integers(2))
   return formula
 
-def add_noise(value, max):
+def add_noise(value, max, min = 0):
   if NETWORK_RNG.random() < MUTATION_RATE:
-    return max - abs((value + NETWORK_RNG.normal(loc=0, scale=max*MUTATION_RATE)) % (2*max) - max)
+    new_value = (value + NETWORK_RNG.normal(loc=0, scale=max*MUTATION_RATE))
+    if new_value > max:
+      return max - (new_value - max)
+    elif new_value < min:
+      return min + (min - new_value)
+    else:
+      return new_value
   else:
     return value
 
@@ -29,11 +35,13 @@ class Chemical:
 
   INIT_POTENTIAL_MAX = 7.5
   INIT_INITIAL_CONC_MAX = 2.0
-  INIT_DECAY_MAX = 1.0
+  INIT_DECAY_MIN = 1.0
+  INIT_DECAY_MAX = 10.0
 
   FORMULA_LEN_MAX = 4
   POTENTIAL_MAX = 7.5
   INITIAL_CONC_MAX = 5.0
+  DECAY_MIN = 1.0
   DECAY_MAX = 10.0
   
   def __init__(self, formula):
@@ -42,7 +50,9 @@ class Chemical:
     self.initial_conc = NETWORK_RNG.random() * Chemical.INIT_INITIAL_CONC_MAX
     self.conc = self.initial_conc
     self.dconc = 0
-    self.decay = NETWORK_RNG.random() * Chemical.INIT_DECAY_MAX
+    # TODO uncomment
+    # self.decay = NETWORK_RNG.random() * (Chemical.INIT_DECAY_MAX - Chemical.INIT_DECAY_MIN) + Chemical.INIT_DECAY_MIN
+    self.decay = 0
 
     self.hist = [self.initial_conc]
   
@@ -69,7 +79,8 @@ class Chemical:
   def mutate(self):
     self.potential = add_noise(self.potential, Chemical.POTENTIAL_MAX)
     self.initial_conc = add_noise(self.initial_conc, Chemical.INITIAL_CONC_MAX)
-    self.decay = add_noise(self.decay, Chemical.DECAY_MAX)
+    # TODO uncomment
+    # self.decay = add_noise(self.decay, Chemical.DECAY_MAX, Chemical.DECAY_MIN)
     self.conc = self.initial_conc
     self.dconc = 0
 
@@ -126,8 +137,8 @@ class Reaction:
 
 class Network:
 
-  N_INIT_CHEMICALS = 6
-  N_INIT_REACTIONS = 6
+  N_INIT_CHEMICALS = 4
+  N_INIT_REACTIONS = 4
 
   OUTPUT_LEFT = 0
   OUTPUT_RIGHT = 1

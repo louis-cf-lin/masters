@@ -6,11 +6,17 @@ from Network import Network
 from graphviz import Digraph
 from globals import DT
 
+def get_consumption(animat_x, animat_y, obj_x, obj_y):
+  sig = 0.4
+  mu = 0
+  dist = np.sqrt((obj_x - animat_x)**2 + (obj_y - animat_y)**2)
+  return 1./(np.sqrt(2.*np.pi)*sig)*np.exp(-np.power((dist - mu)/sig, 2.)/2)
+
 class Animat:
 
   FULL_BATTERY = 1
   DRAIN_RATE = 0.5
-  MAX_LIFE = 16
+  MAX_LIFE = 8
   RADIUS = 0.05
   SENSOR_ANGLES = [math.pi/4, -math.pi/4]
 
@@ -53,7 +59,7 @@ class Animat:
 
     for objType in EnvObjectTypes:
       for obj in env.objects[objType.value]:
-        consumptions[objType.value] += ((obj.x - self.x)**2 + (obj.y - self.y)**2)**(1/2)
+        consumptions[objType.value] += get_consumption(self.x, self.y, obj.x, obj.y)
       self.consumption_hist[objType.value].append(consumptions[objType.value])
 
     left_out, right_out = self.controller.get_outputs(consumptions)
@@ -89,16 +95,17 @@ class Animat:
 
 
   def evaluate(self, env):
-    for _ in range(math.floor(Animat.MAX_LIFE / DT)):
+    for i in range(math.floor(Animat.MAX_LIFE / DT)):
       self.prepare(env)
       self.update()
+      env.update(i)
       if not self.alive:
         break
 
   def graph(self):
     dot = Digraph(comment='chem', engine='neato')
 
-    label = ['OUT LEFT', 'OUT RIGHT', 'FOOD LEFT', 'FOOD RIGHT', 'WATER LEFT', 'WATER RIGHT']
+    label = ['OUT LEFT', 'OUT RIGHT', 'FOOD', 'WATER']
 
     for i, chem in enumerate(self.controller.chemicals):
       atts = { 'fontsize': '10'}
@@ -126,20 +133,6 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
   else:
     animat = Animat(controller)
   animat.evaluate(env)
-
-  # type_colors = ['g', 'b', 'r']
-  # sens_motor_subs = plt.figure(constrained_layout=True, figsize=(9,6)).subplots(2, 1)
-  # sens_motor_subs[0].set_title('Left')
-  # sens_motor_subs[1].set_title('Right')
-  # for side in Sides:
-  #   sens_motor_subs[side.value].plot(animat.motor_hist[side.value], label=f'MOTOR', color='grey')
-  # for encounter in animat.encountered:
-  #   for side in Sides:
-  #     sens_motor_subs[side.value].axvline(x=encounter['time'], color=type_colors[encounter['type']], linestyle=':')
-  #     sens_motor_subs[side.value].legend()
-
-  # if save:
-  #   plt.savefig(f'plot-sensorimotors_{fname}')
 
   chem_colors = ['darkorange','navajowhite','darkgreen','limegreen','darkblue','blue']
   chem_labels = ['Out L','Out R','Food','Water']
@@ -175,17 +168,18 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
   if save:
     plt.savefig(f'plot-chems_{fname}')
 
-  lifetime = plt.figure(constrained_layout=True, figsize=(10,5)).subplots(1,2)
+  lifetime = plt.figure(constrained_layout=True, figsize=(10,5)).subfigures(1,2)
 
-  lifetime[0].set_title('Trajectory')
-  lifetime[0].set_aspect('equal')
-  lifetime[0].set_xlim(Env.MIN_X, Env.MAX_X)
-  lifetime[0].set_ylim(Env.MIN_Y, Env.MAX_Y)
-  lifetime[0].plot(animat.x_hist, animat.y_hist, 'ko', ms=1, alpha=0.5)
-  lifetime[0].plot(animat.x_hist, animat.y_hist, ms=1, alpha=0.1)
-  lifetime[0].add_patch(plt.Circle((animat.x_hist[0], animat.y_hist[0]), Animat.RADIUS, color='black', fill=False))
-  lifetime[0].add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
-  env.plot(lifetime[0])
+  trajectory = lifetime[0].subplots()
+  trajectory.set_title('Trajectory')
+  trajectory.set_aspect('equal')
+  trajectory.set_xlim(Env.MIN_X, Env.MAX_X)
+  trajectory.set_ylim(Env.MIN_Y, Env.MAX_Y)
+  trajectory.plot(animat.x_hist, animat.y_hist, 'ko', ms=1, alpha=0.5)
+  trajectory.plot(animat.x_hist, animat.y_hist, ms=1, alpha=0.1)
+  trajectory.add_patch(plt.Circle((animat.x_hist[0], animat.y_hist[0]), Animat.RADIUS, color='black', fill=False))
+  trajectory.add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
+  env.plot(trajectory)
 
   type_colors = ['g', 'b', 'r']
   motor_subs = lifetime[1].subplots(2,1)
@@ -193,9 +187,9 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
   motor_subs[1].set_title('Right')
   for side in Sides:
     motor_subs[side.value].plot(animat.motor_hist[side.value], label=f'MOTOR', color='grey')
-  for encounter in animat.encountered:
+  for consumed in env.consumed:
     for side in Sides:
-      motor_subs[side.value].axvline(x=encounter['time'], color=type_colors[encounter['type']], linestyle=':')
+      motor_subs[side.value].axvline(x=consumed.consume_time, color=type_colors[EnvObjectTypes[consumed.type].value], linestyle=':')
       motor_subs[side.value].legend()
   
 
