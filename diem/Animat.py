@@ -6,39 +6,6 @@ from Network import Network
 from graphviz import Digraph
 from globals import DT
 
-def find_nearest(animat, env):
-  for type in EnvObjectTypes:
-    min_dsq = math.inf
-    for object in env.objects[type.value]:
-      dsq = (animat.x - object.x)**2 + (animat.y - object.y)**2
-      if (dsq < min_dsq):
-        min_dsq = dsq
-        animat.dsq[type.value] = dsq
-        animat.nearest[type.value] = object
-
-def get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient):
-
-  # larger falloff means farther sight
-  falloff = 0.25
-
-  d_sq = (sens_x - obj_x)**2 + (sens_y - obj_y)**2
-
-  omni = falloff/(falloff + d_sq) # (0,1)
-  
-  # sensor to object vector
-  s2o = [obj_x - sens_x, 
-        obj_y - sens_y]
-  s2o_mag = np.sqrt(d_sq)
-  # normalise
-  if s2o_mag > 0:
-    s2o = [v / s2o_mag for v in s2o]
-  # sensor direction unit vector
-  sens_uv = [math.cos(sens_orient),
-              math.sin(sens_orient)]
-
-  # positive component of sensor to object projection on sensor direction
-  return omni * max(0.0, s2o[0]*sens_uv[0] + s2o[1]*sens_uv[1])
-
 class Animat:
 
   FULL_BATTERY = 1
@@ -52,14 +19,17 @@ class Animat:
       self.controller = Network()
     else:
       self.controller = controller
-    self.nearest = [None for _ in EnvObjectTypes]
     self.dsq = [None for _ in EnvObjectTypes]
     self.motor_hist = [[] for _ in Sides]
-    self.sens_hist = [[[] for _ in ConsumableTypes] for _ in Sides]
+    self.consumption_hist = [[] for _ in ConsumableTypes]
     self.encountered = []
+    self.chemical_hist = [sum(chem.conc for chem in self.controller.chemicals)]
     self.dx = None
     self.dy = None
     self.dtheta = None
+
+    self.energy = sum(chem.conc * chem.potential for chem in self.controller.chemicals)
+    self.energy_hist = [self.energy]
 
     # self.x = np.random.random()
     # self.y = np.random.random()
@@ -70,35 +40,23 @@ class Animat:
     self.y_hist = [self.y]
     self.theta = math.pi * 5 / 8
 
-    self.battery = [Animat.FULL_BATTERY for _ in ConsumableTypes]
-    self.battery_hist = [[battery] for battery in self.battery]
     self.fitness = 0
     self.alive = True
 
 
   def __eq__(self, other) :
-    return self.controller == other.controller and np.array_equal(self.nearest, other.nearest) and np.array_equal(self.dsq, other.dsq) and self.dx == other.dx and self.dy == other.dy and self.dtheta == other.dtheta
+    return self.controller == other.controller and np.array_equal(self.dsq, other.dsq) and self.dx == other.dx and self.dy == other.dy and self.dtheta == other.dtheta
 
 
   def prepare(self, env):
-    # store closest object of each type
-    find_nearest(self, env)
-    readings = np.zeros((len(Sides), len(EnvObjectTypes)))
-    # sensor readings
-    for side in Sides:
-      # sensor properties
-      sens_orient = self.theta + self.SENSOR_ANGLES[side.value]
-      sens_x = self.x + self.RADIUS * math.cos(sens_orient)
-      sens_y = self.y + self.RADIUS * math.sin(sens_orient)
-      # calculate reading for each sensor
-      for type in EnvObjectTypes:
-        obj_x = self.nearest[type.value].x
-        obj_y = self.nearest[type.value].y
-        reading = get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient)
-        readings[side.value][type.value] = reading
-        self.sens_hist[side.value][type.value].append(reading)
-    # get chemical outputs
-    left_out, right_out = self.controller.get_outputs(readings)
+    consumptions = np.zeros(len(EnvObjectTypes))
+
+    for objType in EnvObjectTypes:
+      for obj in env.objects[objType.value]:
+        consumptions[objType.value] += ((obj.x - self.x)**2 + (obj.y - self.y)**2)**(1/2)
+      self.consumption_hist[objType.value].append(consumptions[objType.value])
+
+    left_out, right_out = self.controller.get_outputs(consumptions)
     
     # set motor state
     left_motor_state = left_out
@@ -112,42 +70,28 @@ class Animat:
     self.dtheta = (right_motor_state - left_motor_state) / Animat.RADIUS
 
 
-  def update(self, env, i):
+  def update(self):
     # update position and orientation
     self.x += self.dx * DT
     self.x_hist.append(self.x)
     self.y += self.dy * DT
     self.y_hist.append(self.y)
     self.theta += self.dtheta * DT
-    # check if encountered any objects
-    encountered = False
-    for type in EnvObjectTypes:
-      if self.dsq[type.value] <= Animat.RADIUS ** 2:
-        encountered = copy.deepcopy(self.nearest[type.value])
-        env.consumed.append(encountered)
-        self.nearest[type.value].reset()
-        if any(encountered.type == type.name for type in ConsumableTypes):
-          self.battery[type.value] = Animat.FULL_BATTERY
-          self.encountered.append({'time': i, 'type': type.value})
-        else:
-          self.battery = [0, 0]
-      else:
-        self.battery[type.value] = max(0.0, self.battery[type.value] - Animat.DRAIN_RATE*DT)
-    # update battery and env
-    self.fitness += np.prod(self.battery) * DT * 10
-    for type in ConsumableTypes:
-      self.battery_hist[type.value].append(self.battery[type.value])
 
-    # TODO toggle dual battery
-    if any(b <= 0 for b in self.battery):
-    # if sum(self.battery) <= 0:
+    self.energy = sum([chem.conc * chem.potential for chem in self.controller.chemicals])
+    self.energy_hist.append(self.energy)
+    self.chemical_hist.append(sum([chem.conc for chem in self.controller.chemicals]))
+
+    self.fitness += self.energy * DT
+
+    if self.energy <= 0:
       self.alive = False
 
 
   def evaluate(self, env):
-    for i in range(math.floor(Animat.MAX_LIFE / DT)):
+    for _ in range(math.floor(Animat.MAX_LIFE / DT)):
       self.prepare(env)
-      self.update(env, i)
+      self.update()
       if not self.alive:
         break
 
@@ -183,55 +127,43 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
     animat = Animat(controller)
   animat.evaluate(env)
 
-  type_colors = ['g', 'b', 'r']
-  sens_motor_subs = plt.figure(constrained_layout=True, figsize=(9,6)).subplots(2, 1)
-  sens_motor_subs[0].set_title('Left')
-  sens_motor_subs[1].set_title('Right')
-  for side in Sides:
-    for type in EnvObjectTypes:
-      sens_motor_subs[side.value].plot(animat.sens_hist[side.value][type.value], '--', label=f'{type.name} SENSOR', color=type_colors[type.value])
-    sens_motor_subs[side.value].plot(animat.motor_hist[side.value], label=f'MOTOR', color='grey')
-  for encounter in animat.encountered:
-    for side in Sides:
-      sens_motor_subs[side.value].axvline(x=encounter['time'], color=type_colors[encounter['type']], linestyle=':')
-      sens_motor_subs[side.value].legend()
+  # type_colors = ['g', 'b', 'r']
+  # sens_motor_subs = plt.figure(constrained_layout=True, figsize=(9,6)).subplots(2, 1)
+  # sens_motor_subs[0].set_title('Left')
+  # sens_motor_subs[1].set_title('Right')
+  # for side in Sides:
+  #   sens_motor_subs[side.value].plot(animat.motor_hist[side.value], label=f'MOTOR', color='grey')
+  # for encounter in animat.encountered:
+  #   for side in Sides:
+  #     sens_motor_subs[side.value].axvline(x=encounter['time'], color=type_colors[encounter['type']], linestyle=':')
+  #     sens_motor_subs[side.value].legend()
 
-  if save:
-    plt.savefig(f'plot-sensorimotors_{fname}')
+  # if save:
+  #   plt.savefig(f'plot-sensorimotors_{fname}')
 
   chem_colors = ['darkorange','navajowhite','darkgreen','limegreen','darkblue','blue']
-  chem_labels = ['Out L','Out R','Food L','Food R']
+  chem_labels = ['Out L','Out R','Food','Water']
   chem = plt.figure(constrained_layout=True, figsize=(12,6)).subplots(2, 1)
   chem[0].set_title('Chemical concentrations')
   chem[1].set_title('Energy')
-  total_chem = np.zeros(len(animat.controller.chemicals[0].hist))
-  total_energy = np.zeros(len(animat.controller.chemicals[0].hist))
   for (i, chemical) in enumerate(animat.controller.chemicals):
-    hist = chemical.hist
-    energy = np.array(hist) * chemical.potential
+    energy = np.array(chemical.hist) * chemical.potential
     if i < len(chem_labels):
       kwargs = { 'label': f'{chem_labels[i]} ({chemical.formula})', 'c': chem_colors[i], 'alpha': 0.75, 'zorder': 1 }
     else: 
       kwargs = { 'ls': ':', 'label': 'Other', 'c': 'black', 'alpha': 0.2, 'zorder': 0 }
-    chem[0].plot(hist, **kwargs)
+    chem[0].plot(chemical.hist, **kwargs)
     chem[1].plot(energy, **kwargs)
-    total_chem += hist
-    total_energy += energy
 
-  for type in EnvObjectTypes:
-    for side in Sides:
-      input_chem = animat.controller.chemicals[getattr(Network, f'{type.name}_{side.name}')]
-      total_chem -= input_chem.hist
-      total_energy -= np.array(input_chem.hist) * input_chem.potential
 
   chem[0].set_ylabel('Chemical concs')
   total_chem_plot = chem[0].twinx()
-  total_chem_plot.plot(total_chem, c='darkviolet')
+  total_chem_plot.plot(animat.chemical_hist, c='darkviolet')
   total_chem_plot.set_ylabel('Total concs', color='darkviolet')  
 
   chem[1].set_ylabel('Energy')
   total_energy_plot = chem[1].twinx()
-  total_energy_plot.plot(total_energy, c='darkviolet')
+  total_energy_plot.plot(animat.energy_hist, c='darkviolet')
   total_energy_plot.set_ylabel('Total energy', color='darkviolet')
 
   handles, labels = chem[0].get_legend_handles_labels()
@@ -255,9 +187,17 @@ def test_animat_trial(env, controller=None, show=True, save=False, fname=''):
   lifetime[0].add_patch(plt.Circle((animat.x, animat.y), Animat.RADIUS, color='black'))
   env.plot(lifetime[0])
 
-  lifetime[1].set_title('Battery')
-  for type in ConsumableTypes:
-    lifetime[1].plot(animat.battery_hist[type.value], color=type_colors[type.value])
+  type_colors = ['g', 'b', 'r']
+  motor_subs = lifetime[1].subplots(2,1)
+  motor_subs[0].set_title('Left')
+  motor_subs[1].set_title('Right')
+  for side in Sides:
+    motor_subs[side.value].plot(animat.motor_hist[side.value], label=f'MOTOR', color='grey')
+  for encounter in animat.encountered:
+    for side in Sides:
+      motor_subs[side.value].axvline(x=encounter['time'], color=type_colors[encounter['type']], linestyle=':')
+      motor_subs[side.value].legend()
+  
 
   if save:
     plt.savefig(f'plot-lifetime_{fname}')

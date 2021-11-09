@@ -53,7 +53,7 @@ class Chemical:
     return self.formula
 
   def __str__(self):
-    return self.formula    
+    return self.formula
 
   def prep_update(self, reading = None):
     self.dconc = -self.decay * self.conc
@@ -131,10 +131,8 @@ class Network:
 
   OUTPUT_LEFT = 0
   OUTPUT_RIGHT = 1
-  FOOD_LEFT = 2
-  FOOD_RIGHT = 3
-  WATER_LEFT = 4
-  WATER_RIGHT = 5
+  FOOD = 2
+  WATER = 3
 
   def __init__(self):
     self.chemicals = []
@@ -213,16 +211,14 @@ class Network:
       self.reactions.append(Reaction(lhs, np.array(rhs)))
     return 
   
-  def get_outputs(self, readings):
+  def get_outputs(self, consumptions):
     # set decay
     for chemical in self.chemicals:
       chemical.prep_update()
 
-    # TODO uncomment if using natural dconc for inputs
-    # add sensor inputs
-    # for type in EnvObjectTypes:
-    #   for side in Sides:
-    #     self.chemicals[getattr(Network, f'{type.name}_{side.name}')].prep_update(readings[side.value][type.value])
+    # add consumptions
+    for type in EnvObjectTypes:
+      self.chemicals[getattr(Network, f'{type.name}')].prep_update(consumptions[type.value])
 
     # set reaction changes
     for reaction in self.reactions:
@@ -230,13 +226,6 @@ class Network:
     # update chemicals
     for chemical in self.chemicals:
       chemical.update()
-    
-    # TODO uncomment if using natural dconc for inputs
-    for type in EnvObjectTypes:
-      for side in Sides:
-        self.chemicals[getattr(Network, f'{type.name}_{side.name}')].conc = readings[side.value][type.value] * 2
-    
-
     
     return self.chemicals[Network.OUTPUT_LEFT].conc, self.chemicals[Network.OUTPUT_RIGHT].conc
 
