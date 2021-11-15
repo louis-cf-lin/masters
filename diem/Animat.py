@@ -61,14 +61,14 @@ class Animat:
     self.dy = None
     self.dtheta = None
 
-    # self.x = np.random.random()
-    # self.y = np.random.random()
+    # self.x = np.random.random() - Env.MAX_X
+    # self.y = np.random.random() - Env.MAX_Y
     # self.theta = np.random.random() * 2*math.pi
     self.x = Env.MAX_X
-    self.x_hist = [self.x]
     self.y = Env.MIN_Y
-    self.y_hist = [self.y]
     self.theta = math.pi * 5 / 8
+    self.x_hist = [self.x]
+    self.y_hist = [self.y]
 
     self.battery = [Animat.FULL_BATTERY for _ in ConsumableTypes]
     self.battery_hist = [[battery] for battery in self.battery]
@@ -119,6 +119,10 @@ class Animat:
     self.y += self.dy * DT
     self.y_hist.append(self.y)
     self.theta += self.dtheta * DT
+    while self.theta > 2*math.pi:
+      self.theta -= 2*math.pi
+    while self.theta < 0:
+      self.theta += 2*math.pi
     # check if encountered any objects
     encountered = False
     for type in EnvObjectTypes:
@@ -134,13 +138,15 @@ class Animat:
       else:
         self.battery[type.value] = max(0.0, self.battery[type.value] - Animat.DRAIN_RATE*DT)
     # update battery and env
-    self.fitness += np.prod(self.battery) * DT * 10
+    # TODO change to product
+    # self.fitness += np.prod(self.battery) * DT * 10
+    self.fitness += sum(self.battery) * DT * 10
     for type in ConsumableTypes:
       self.battery_hist[type.value].append(self.battery[type.value])
 
     # TODO toggle dual battery
-    if any(b <= 0 for b in self.battery):
-    # if sum(self.battery) <= 0:
+    # if any(b <= 0 for b in self.battery):
+    if sum(self.battery) <= 0:
       self.alive = False
 
 

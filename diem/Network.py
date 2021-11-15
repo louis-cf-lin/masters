@@ -61,8 +61,6 @@ class Chemical:
       self.dconc += reading
 
   def update(self):
-    if (self.dconc > 100 or self.dconc < -100):
-      print('pause')
     self.conc = max(0.0, self.conc + self.dconc * DT)
     self.hist.append(self.conc)    
 
