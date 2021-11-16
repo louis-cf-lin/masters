@@ -1,0 +1,16 @@
+// chem
+digraph {
+	01 [label=<<b>FOOD_BATTERY</b><br/>01> fillcolor=gold fontsize=10 shape=rectangle style=filled]
+	0001 [label=<<b>WATER_BATTERY</b><br/>0001> fillcolor=gold fontsize=10 shape=rectangle style=filled]
+	001 [label=<<b>OUTPUT_LEFT</b><br/>001> fillcolor=gold fontsize=10 shape=rectangle style=filled]
+	000 [label=<<b>OUTPUT_RIGHT</b><br/>000> fillcolor=gold fontsize=10 shape=rectangle style=filled]
+	1 [label=<1> fontsize=10 shape=rectangle]
+	0000 [label=<0000> fontsize=10 shape=rectangle]
+	0 [label=<0> fontsize=10 shape=rectangle]
+	00 [label=<00> fontsize=10 shape=rectangle]
+	0111 [label=<0111> fontsize=10 shape=rectangle]
+	"[001]↔[00]+[1]" [label=<<b>[001]↔[00]+[1]</b><br/>> fontsize=10 shape=plaintext]
+	"[001]↔[00]+[1]" -> 001
+	"[001]↔[00]+[1]" -> 00
+	"[001]↔[00]+[1]" -> 1
+}

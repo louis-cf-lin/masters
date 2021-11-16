@@ -1,0 +1,7 @@
+DT = 0.02
+
+AGGREGATION = True
+
+MUTATION_RATE = 0.1
+
+DRAIN_RATE = -1
