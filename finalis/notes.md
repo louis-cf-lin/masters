@@ -1,0 +1,45 @@
+# Writing notes
+
+- Talk about stuff that were done
+- Usually longer than published papers
+- Include progress and evidence of work + research
+- Bullet point main chapters
+- What is being communicated?
+- Start with placeholder images
+  - Or what plots do I need to support certains claims?
+- Mindmap
+- Things to talk about:
+  - Evolving artificial chemistry
+    - Selection
+    - Variation/Mutation mechanisms
+    - Based on microbial genetic algorithm
+  - Evolutionary/Genetic algorithm
+    - Why genome to phenome mapping wasn't used
+  - Action selection
+  - Differential wheeled robot
+    - Kinematics
+    - Motion
+    - Trajectory
+  - Energy, entropy, and information
+  - Discrete environment
+    - First experimentation
+    - "Grid" movement
+  - Deriving reaction rates
+    - Evolving favoured rate
+    - Explaining ¬□(favoured = forward)
+  - Papers that were reproduced
+    - Evolution of associative learning in chemical networks (McGregor et al.)
+    - A minimal model of metabolism-based chemotaxis (Egbert et al.)
+    - Behavioural metabolution: the adaptive and evolutionary potential of metabolism-based chemotaxis (Egbert et al.)
+    - The microbial genetic algorithm (Harvey)
+    - Evolving action selection and selective attention without actions, attention, or selection (Seth)
+  - Explaining the architecture
+    - Controller (chemical network), reactions, chemicals
+    - Environment, objects, consumables, traps
+    - Agent, sensorimotor links, omnidirectional sensors
+- Say everything three times (fractal)
+  - Whole dissertation (intro)
+  - Middle (explain it)
+  - Conclusion (say it again)
+
+Also see Asana cards
