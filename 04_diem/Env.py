@@ -1,5 +1,8 @@
+import copy
 import numpy as np, matplotlib.pyplot as plt, math
 from enum import Enum
+
+from globals import DT
 
 class EnvObjectTypes(Enum):
   FOOD = 0
@@ -13,11 +16,14 @@ class ConsumableTypes(Enum):
 class EnvObject:
 
   RADIUS = 0.05
-  DECAY = 0.01
+  DECAY = 0.25
+  CONC_MAX = 1
 
   def __init__(self, type, rstate, loc = None):
     self.type = type
+    self.conc = EnvObject.CONC_MAX
     self.rstate = np.random.default_rng(rstate)
+    self.consume_time = None
 
     if loc is None:
       self.x = self.rstate.random() - 0.5
@@ -33,6 +39,7 @@ class EnvObject:
     return 'type: {}, x: {}, y: {}'.format(self.type, self.x, self.y)
   
   def reset(self):
+    self.conc = EnvObject.CONC_MAX
     self.x = self.rstate.random() - 0.5
     self.y = self.rstate.random() - 0.5
 
@@ -48,6 +55,17 @@ class Env:
     self.rstate = np.random.default_rng(rstate)
     self.objects = [ [ EnvObject(type=str(type.name), rstate=self.rstate) for i in range(Env.N_OBJECTS[type.value]) ] for type in EnvObjectTypes ]
     self.consumed = []
+
+  def update(self, i):
+    for type in self.objects:
+      for obj in type:
+        if obj.conc <= 0:
+          obj_copy = copy.deepcopy(obj)
+          obj_copy.consume_time = i
+          self.consumed.append(obj_copy)
+          obj.reset()
+        else:
+          obj.conc -= EnvObject.DECAY * DT
   
   def plot(self, axis):
     colors = ['g', 'b', 'r']
