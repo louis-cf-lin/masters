@@ -76,11 +76,11 @@
 
 #### Simplest model of sensing with memory
 
-![Simplest model of sensing with memory](./images/stress-growth.png)
+![Simplest model of sensing with memory](./notes_images/stress-growth.png)
 
 #### Intuitive cost-benefit analysis of memory
 
-![Intuitive cost-benefit analysis of memory](./images/cost-benefit.png)
+![Intuitive cost-benefit analysis of memory](./notes_images/cost-benefit.png)
 
 > - **In a rapidly changing environment, memory provides a selective advantage.** tau indicates mean duration. _b_ = benefit. Bottom yellow region is cost of having gene on when not needed.
 
@@ -91,7 +91,7 @@
 
 #### In a periodic environment
 
-![Periodic environment](./images/optimal-deg-rate.png)
+![Periodic environment](./notes_images/optimal-deg-rate.png)
 
 > - **For a perioidic environment, the optimal response is either memoryless or a constitutive, while an intermediate amount of memory is never optimal**. All rates and times are given in units of generation time. Parameters: _b_=1.0, _c_=0.3, _k_on_=0.5
 
@@ -101,7 +101,7 @@
 
 #### In a _randomly changing environment_
 
-![Random environment](./images/optimal-deg-rate-random.png)
+![Random environment](./notes_images/optimal-deg-rate-random.png)
 
 > - All rates and times are given in units of generation time. Parameters: _b_=1.0, _c_=0.3, _k_on_=0.5, mean tau_env = 3.5
 
@@ -109,7 +109,7 @@
 
 #### How does the response strategy depend on the environment?
 
-![Response strategy vs environment](./images/optimisation-phase-diagram.png)
+![Response strategy vs environment](./notes_images/optimisation-phase-diagram.png)
 
 > - Each point corresponds to a different type of randomly changing environment
 
@@ -133,32 +133,32 @@
 > - Bacteriophages are viruses that infect bacteria
 > - The lambda phage binds receptors on E. coli cells, injects its DNA, produces many new phage, and eventually lyses the bacterium
 
-![lyse](./images/lyse.png)
+![lyse](./notes_images/lyse.png)
 
-![phage entering cell](./images/phage-entering-cell.png)
+![phage entering cell](./notes_images/phage-entering-cell.png)
 
 - Phage primarily uses LamB to enter a cell, which grows on maltose and maltotriose
 
 #### How do bacteria adapt in the presence of phage?
 
-![e coli vs phage](./images/ecoli-phage.png)
+![e coli vs phage](./notes_images/ecoli-phage.png)
 
-![e coli vs phage](./images/ecoli-phage-2.png)
+![e coli vs phage](./notes_images/ecoli-phage-2.png)
 
-![resistance switching](./images/resistance-switching.png)
+![resistance switching](./notes_images/resistance-switching.png)
 
 - Why doesn't malT just completely kill off the phage? Costs and benefits
 
-![switching phases](./images/switching-phases.png)
+![switching phases](./notes_images/switching-phases.png)
 
-![cyclical competition](./images/cyclical-comp.png)
+![cyclical competition](./notes_images/cyclical-comp.png)
 
 - Cyclical competition (e.g. rock-paper-scissors)
 - What are the long-term outcomes?
 
-![localised patches](./images/localised-patches.png)
+![localised patches](./notes_images/localised-patches.png)
 
-![game theory](./images/game-theory.png)
+![game theory](./notes_images/game-theory.png)
 
 #### Implications
 
