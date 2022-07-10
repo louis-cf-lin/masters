@@ -6,9 +6,9 @@ from Animat import test_animat_trial
 
 if __name__ == '__main__':
 
-  TRIAL = 1
-  BATCHES = 2
-  BATCH_SIZE = 200
+  TRIAL = 2
+  BATCHES = 4
+  BATCH_SIZE = 100
 
   highest_fitness = 0
   pop = Population()
