@@ -67,9 +67,6 @@ class Animat:
     self.dy = None
     self.dtheta = None
 
-    # self.x = np.random.random() - Env.MAX_X
-    # self.y = np.random.random() - Env.MAX_Y
-    # self.theta = np.random.random() * 2*math.pi
     self.x = Env.MAX_X
     self.y = Env.MIN_Y
     self.theta = math.pi * 5 / 8

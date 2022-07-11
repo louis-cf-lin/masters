@@ -6,9 +6,9 @@ from Animat import test_animat_trial
 
 if __name__ == '__main__':
 
-  TRIAL = 2
-  BATCHES = 4
+  TRIAL = 0
   BATCH_SIZE = 100
+  BATCHES = int(400 / BATCH_SIZE)
 
   highest_fitness = 0
   pop = Population()
@@ -28,8 +28,9 @@ if __name__ == '__main__':
         highest_fitness = best.fitness
         plt.close('all')
         test_animat_trial(env=Env(batch + TRIAL), controller=best.controller.deep_copy(
-        ), show=False, save=True, fname=batch)
-      pop.evolve()
+        ), show=False, save=False, fname=batch)
+      if repeat < BATCH_SIZE - 1:
+        pop.evolve()  # prevent losing data on last iteration
 
     with open(f'./saved_vars/trial_{TRIAL}/pop_{BATCH_SIZE}_batch_{batch}.pkl', 'wb') as f:
       pickle.dump([pop, best.controller], f)
@@ -41,7 +42,7 @@ if __name__ == '__main__':
     axs2.set_ylim(Env.MIN_Y, Env.MAX_Y)
     for animat in pop.animats:
       axs2.plot(animat.x_hist, animat.y_hist, 'k-', ms=1, alpha=0.1)
-    fig2.savefig(f'plot-population_{batch}')
+    # fig2.savefig(f'plot-population_{batch}')
 
   with open(f'./saved_vars/trial_{TRIAL}/pop_{BATCH_SIZE}_gen_fit.pkl', 'wb') as f:
     pickle.dump([max, mean, min], f)
@@ -53,6 +54,6 @@ if __name__ == '__main__':
   axs1.plot(min)
   axs1.set_ylabel('Fitness')
   axs1.set_xlabel('Generation')
-  fig1.savefig('plot-population-fitnesses')
+  # fig1.savefig('plot-population-fitnesses')
 
   print('stop')

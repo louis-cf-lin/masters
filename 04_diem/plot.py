@@ -9,21 +9,21 @@ VIEW = True
 
 
 def import_data(batch_size, trial):
-  pop = []
-  champ_controller = []
+  populations = []
+  champ_controllers = []
 
-  num_of_batches = 400 / batch_size
+  num_of_batches = int(400 / batch_size)
 
   for batch in range(num_of_batches):
     with open(f'./saved_vars/trial_{trial}/pop_{BATCH_SIZE}_batch_{batch}.pkl', 'rb') as f:
       temp_pop, temp_champ_controller = pickle.load(f)
-      pop.append(temp_pop)
-      champ_controller.append(temp_champ_controller)
+      populations.append(temp_pop)
+      champ_controllers.append(temp_champ_controller)
 
-  with open(f'./saved_vars/pop_{batch_size}_gen_fit.pkl', 'wb') as f:
+  with open(f'./saved_vars/trial_{trial}/pop_{batch_size}_gen_fit.pkl', 'rb') as f:
     max, mean, min = pickle.load(f)
 
-  return pop, champ_controller, max, mean, min
+  return populations, champ_controllers, max, mean, min
 
 
 def plot_gen_fit():
@@ -36,11 +36,15 @@ def plot_gen_fit():
                hue="region", style="event",
                data=fmri)
 
+  if VIEW:
+    plt.show()
+
 
 if __name__ == '__main__':
 
-  BATCH_SIZE = 50
+  BATCH_SIZE = 100
   TRIAL = 0
 
-  pop, champ_controller, max, mean, min = import_data(BATCH_SIZE, TRIAL)
+  populations, champ_controllers, max, mean, min = import_data(
+      BATCH_SIZE, TRIAL)
   plot_gen_fit()
