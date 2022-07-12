@@ -119,10 +119,6 @@ class Animat:
     self.y += self.dy * DT
     self.y_hist.append(self.y)
     self.theta += self.dtheta * DT
-    while self.theta > 2*math.pi:
-      self.theta -= 2*math.pi
-    while self.theta < 0:
-      self.theta += 2*math.pi
     # check if encountered any objects
     encountered = False
     for type in EnvObjectTypes:
@@ -152,33 +148,6 @@ class Animat:
       self.update(env, i)
       if not self.alive:
         break
-
-  def graph(self):
-    dot = Digraph(comment='chem', engine='neato')
-
-    label = ['OUT LEFT', 'OUT RIGHT', 'FOOD LEFT',
-             'FOOD RIGHT', 'WATER LEFT', 'WATER RIGHT']
-
-    for i, chem in enumerate(self.controller.chemicals):
-      atts = {'fontsize': '10'}
-      if i < len(label):
-        dot.node(chem.formula, shape='rectangle', fillcolor='gold',
-                 style='filled', label=f'<<b>{label[i]}</b><br/>{chem.formula}>', **atts)
-      else:
-        dot.node(chem.formula, shape='rectangle',
-                 label=f'<{chem.formula}>', **atts)
-
-    for rxn in self.controller.reactions:
-      atts = {'fontsize': '10'}
-      dot.node(str(rxn), shape='plaintext',
-               label=f'<<b>{str(rxn)}</b><br/>>', **atts)
-      for lhs_chem in rxn.lhs:
-        dot.edge(str(rxn), lhs_chem.formula)
-      for rhs_chem in rxn.rhs:
-        dot.edge(str(rxn), rhs_chem.formula)
-
-    dot.format = 'png'
-    dot.render('plot-graph')
 
 
 def test_animat_trial(env, controller=None, show=True, save=False, fname=''):

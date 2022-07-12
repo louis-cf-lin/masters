@@ -63,10 +63,7 @@ class Chemical:
       self.dconc += reading
 
   def update(self):
-    if (self.dconc > 100 or self.dconc < -100):
-      print('ayo')
-    # self.conc = min(max(0.0, self.conc + self.dconc * DT), 1000000)
-    self.conc = max(0.0, self.conc + self.dconc * DT)
+    self.conc = min(max(0.0, self.conc + self.dconc * DT), 1000000)
     self.hist.append(self.conc)
 
   def mutate(self):
