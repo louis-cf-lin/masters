@@ -93,7 +93,7 @@ def plot_population_fitnesses(batch_size, max, mean, min):
   ax.fill_between(range(TOTAL_RUNS), mean, alpha=0.1, color='#FD7A22')
   ax.fill_between(range(TOTAL_RUNS), min, alpha=0.1, color='#29C943')
   ax.set(title=f'Batch size = {batch_size}', xlim=(
-      0, TOTAL_RUNS), ylim=(0, 200), xlabel='Generation', ylabel='Fitness')
+      0, TOTAL_RUNS), ylim=(0, None), xlabel='Generation', ylabel='Fitness')
   ax.legend_.set_title(None)
 
   if SAVE:
@@ -205,7 +205,7 @@ def plot_sensorimotors(batch_size, animats):
 
   g._legend.remove()
   g.fig.legend(['Food sensor', 'Water sensor', 'Motor speed'],
-               bbox_to_anchor=(0.85, 1.03), loc='upper right', ncol=3)
+               bbox_to_anchor=(0.85, 0.99 + batch_size*0.0007), loc='upper right', ncol=3)
 
   g.set_axis_labels('', '')  # remove subplot labels
   g.fig.text(x=0, y=0.5, verticalalignment='center',
@@ -258,23 +258,22 @@ def plot_chemicals(batch_size, animats, plot_energy=False):
              s='Time step',  size=14)
 
   if SAVE:
-    g.fig.savefig(f'./figs/trial_{TRIAL}/bs_{batch_size}_{"energy" if plot_energy else "chems"}',
+    g.fig.savefig(f'./figs/bs_{batch_size}_{"energy" if plot_energy else "chems"}',
                   dpi=800, bbox_inches='tight')
 
 
 if __name__ == '__main__':
 
   TRIAL = 0
-  BATCH_SIZE = 50
+  BATCH_SIZE = 200
 
   num_batches = int(TOTAL_RUNS / BATCH_SIZE)
 
   populations, champ_controllers, max, mean, min = import_data(
       BATCH_SIZE, num_batches, TRIAL)
 
-  plot_population_fitnesses(BATCH_SIZE, max, mean, min)
-
-  plot_population_trajectories(BATCH_SIZE, populations)
+  # plot_population_fitnesses(BATCH_SIZE, max, mean, min)
+  # plot_population_trajectories(BATCH_SIZE, populations)
 
   champ_animats = []
   envs = []
@@ -285,14 +284,11 @@ if __name__ == '__main__':
     champ_animats.append(animat)
     envs.append(env)
 
-  plot_life(BATCH_SIZE, champ_animats, envs)
-
-  plot_battery(BATCH_SIZE, champ_animats)
-
+  # plot_life(BATCH_SIZE, champ_animats, envs)
+  # plot_battery(BATCH_SIZE, champ_animats)
   plot_sensorimotors(BATCH_SIZE, champ_animats)
-
-  plot_chemicals(BATCH_SIZE, champ_animats)
-  plot_chemicals(BATCH_SIZE, champ_animats, plot_energy=True)
+  # plot_chemicals(BATCH_SIZE, champ_animats)
+  # plot_chemicals(BATCH_SIZE, champ_animats, plot_energy=True)
 
   if VIEW:
     plt.show(block=True)
