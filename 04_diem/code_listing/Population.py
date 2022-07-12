@@ -1,6 +1,6 @@
 import numpy as np
-from Animat import Animat
-from Env import Env
+from animat import Animat
+from env import Env
 
 POP_RNG = np.random.default_rng(123456789)
 
@@ -31,7 +31,8 @@ class Population:
     return max, mean, min, self.animats[best_index]
 
   def evolve(self):
-    controllers = [animat.controller.deep_copy() for animat in self.animats]
+    controllers = [animat.controller.deep_copy()
+                   for animat in self.animats]
     for _ in range(Population.N_TOUR_ROUNDS):
       a = POP_RNG.integers(Population.SIZE)
       b = (a + 1 + POP_RNG.integers(Population.DEME_SIZE)

@@ -16,7 +16,6 @@ class ConsumableTypes(Enum):
 
 
 class EnvObject:
-
   RADIUS = 0.05
   DECAY = 0.25
   CONC_MAX = 1
@@ -26,7 +25,6 @@ class EnvObject:
     self.conc = EnvObject.CONC_MAX
     self.rstate = np.random.default_rng(rstate)
     self.consume_time = None
-
     if loc is None:
       self.x = self.rstate.random() - 0.5
       self.y = self.rstate.random() - 0.5
@@ -47,7 +45,6 @@ class EnvObject:
 
 
 class Env:
-
   MAX_X = 0.5
   MAX_Y = 0.5
   MIN_X = -0.5
@@ -56,8 +53,10 @@ class Env:
 
   def __init__(self, rstate):
     self.rstate = np.random.default_rng(rstate)
-    self.objects = [[EnvObject(type=str(type.name), rstate=self.rstate) for i in range(
-        Env.N_OBJECTS[type.value])] for type in EnvObjectTypes]
+    self.objects = [
+        [EnvObject(type=str(type.name), rstate=self.rstate)
+            for _ in range(Env.N_OBJECTS[type.value])]
+        for type in EnvObjectTypes]
     self.consumed = []
 
   def update(self, i):
@@ -78,5 +77,11 @@ class Env:
         axis.add_patch(plt.Circle((object.x, object.y),
                        EnvObject.RADIUS, color=colors[type.value]))
     for object in self.consumed:
-      axis.add_patch(plt.Circle((object.x, object.y), EnvObject.RADIUS,
-                     color=colors[EnvObjectTypes[object.type].value], fill=False))
+      axis.add_patch(
+          plt.Circle(
+              (object.x, object.y),
+              EnvObject.RADIUS,
+              color=colors[EnvObjectTypes[object.type].value],
+              fill=False
+          )
+      )

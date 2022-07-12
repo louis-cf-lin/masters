@@ -1,9 +1,9 @@
 import math
 import numpy as np
 import copy
-from Sides import Sides
-from Env import EnvObjectTypes, ConsumableTypes, Env
-from Network import Network
+from sides import Sides
+from env import EnvObjectTypes, ConsumableTypes, Env
+from network import Network
 from globals import DT
 
 
@@ -19,12 +19,10 @@ def find_nearest(animat, env):
 
 
 def get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient):
-
   # larger falloff means farther sight
   falloff = 0.25
 
   d_sq = (sens_x - obj_x)**2 + (sens_y - obj_y)**2
-
   omni = falloff/(falloff + d_sq)  # (0,1)
 
   # sensor to object vector
@@ -38,12 +36,11 @@ def get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient):
   sens_uv = [math.cos(sens_orient),
              math.sin(sens_orient)]
 
-  # positive component of sensor to object projection on sensor direction
+  # positive component of sensor to object projection on direction
   return omni * max(0.0, s2o[0]*sens_uv[0] + s2o[1]*sens_uv[1])
 
 
 class Animat:
-
   FULL_BATTERY = 1
   DRAIN_RATE = 0.5
   MAX_LIFE = 16
@@ -63,20 +60,23 @@ class Animat:
     self.dx = None
     self.dy = None
     self.dtheta = None
-
     self.x = Env.MAX_X
     self.y = Env.MIN_Y
     self.theta = math.pi * 5 / 8
     self.x_hist = [self.x]
     self.y_hist = [self.y]
-
     self.battery = [Animat.FULL_BATTERY for _ in ConsumableTypes]
     self.battery_hist = [[battery] for battery in self.battery]
     self.fitness = 0
     self.alive = True
 
   def __eq__(self, other):
-    return self.controller == other.controller and np.array_equal(self.nearest, other.nearest) and np.array_equal(self.dsq, other.dsq) and self.dx == other.dx and self.dy == other.dy and self.dtheta == other.dtheta
+    return self.controller == other.controller and \
+        np.array_equal(self.nearest, other.nearest) and \
+        np.array_equal(self.dsq, other.dsq) and \
+        self.dx == other.dx and \
+        self.dy == other.dy and \
+        self.dtheta == other.dtheta
 
   def prepare(self, env):
     # store closest object of each type
@@ -92,7 +92,8 @@ class Animat:
       for type in EnvObjectTypes:
         obj_x = self.nearest[type.value].x
         obj_y = self.nearest[type.value].y
-        reading = get_sens_reading(obj_x, obj_y, sens_x, sens_y, sens_orient)
+        reading = get_sens_reading(obj_x, obj_y, sens_x,
+                                   sens_y, sens_orient)
         readings[side.value][type.value] = reading
         self.sens_hist[side.value][type.value].append(reading)
     # get chemical outputs
@@ -123,7 +124,8 @@ class Animat:
         encountered = copy.deepcopy(self.nearest[type.value])
         env.consumed.append(encountered)
         self.nearest[type.value].reset()
-        if any(encountered.type == type.name for type in ConsumableTypes):
+        if any(encountered.type == type.name
+               for type in ConsumableTypes):
           self.battery[type.value] = Animat.FULL_BATTERY
           self.encountered.append({'time': i, 'type': type.value})
         else:

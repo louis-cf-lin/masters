@@ -1,11 +1,10 @@
-from functools import reduce
-from Sides import Sides
-from collections import Counter
 import copy
 import numpy as np
-from Env import EnvObjectTypes
+from functools import reduce
+from sides import Sides
+from collections import Counter
+from env import EnvObjectTypes
 from globals import DT, AGGREGATION, MUTATION_RATE
-
 
 NETWORK_RNG = np.random.default_rng(814486224)
 
@@ -20,19 +19,20 @@ def rand_formula(min_len=4, max_len=4):
 
 def add_noise(value, max):
   if NETWORK_RNG.random() < MUTATION_RATE:
-    return max - abs((value + NETWORK_RNG.normal(loc=0, scale=max*MUTATION_RATE)) % (2*max) - max)
+    return max - abs(
+        (value +
+         NETWORK_RNG.normal(loc=0, scale=max*MUTATION_RATE)) % (2*max) -
+        max
+    )
   else:
     return value
 
 
 class Chemical:
-
   N_GENES = 4
-
   INIT_POTENTIAL_MAX = 7.5
   INIT_INITIAL_CONC_MAX = 2.0
   INIT_DECAY_MAX = 1.0
-
   FORMULA_LEN_MAX = 4
   POTENTIAL_MAX = 7.5
   INITIAL_CONC_MAX = 5.0
@@ -40,16 +40,25 @@ class Chemical:
 
   def __init__(self, formula):
     self.formula = formula
-    self.potential = NETWORK_RNG.random() * Chemical.INIT_POTENTIAL_MAX
-    self.initial_conc = NETWORK_RNG.random() * Chemical.INIT_INITIAL_CONC_MAX
+    self.potential = NETWORK_RNG.random() * \
+        Chemical.INIT_POTENTIAL_MAX
+    self.initial_conc = NETWORK_RNG.random() * \
+        Chemical.INIT_INITIAL_CONC_MAX
     self.conc = self.initial_conc
     self.dconc = 0
-    self.decay = NETWORK_RNG.random() * Chemical.INIT_DECAY_MAX
+    self.decay = NETWORK_RNG.random() * \
+        Chemical.INIT_DECAY_MAX
 
     self.hist = [self.initial_conc]
 
   def __eq__(self, other):
-    return self.formula == other.formula and self.potential == other.potential and self.initial_conc == other.initial_conc and self.conc == other.conc and self.dconc == other.dconc and self.decay == other.decay and np.array_equal(self.hist, other.hist)
+    return self.formula == other.formula and \
+        self.potential == other.potential and \
+        self.initial_conc == other.initial_conc and \
+        self.conc == other.conc and \
+        self.dconc == other.dconc and \
+        self.decay == other.decay and \
+        np.array_equal(self.hist, other.hist)
 
   def __repr__(self):
     return self.formula
@@ -67,15 +76,16 @@ class Chemical:
     self.hist.append(self.conc)
 
   def mutate(self):
-    self.potential = add_noise(self.potential, Chemical.POTENTIAL_MAX)
-    self.initial_conc = add_noise(self.initial_conc, Chemical.INITIAL_CONC_MAX)
+    self.potential = add_noise(self.potential,
+                               Chemical.POTENTIAL_MAX)
+    self.initial_conc = add_noise(self.initial_conc,
+                                  Chemical.INITIAL_CONC_MAX)
     self.decay = add_noise(self.decay, Chemical.DECAY_MAX)
     self.conc = self.initial_conc
     self.dconc = 0
 
 
 class Reaction:
-
   INIT_FAV_RATE_MAX = 0.1
   FAV_RATE_MAX = 60.0
 
@@ -95,13 +105,18 @@ class Reaction:
       self.forward = self.fav_rate * (np.e ** (-mu_rhs+mu_lhs))
 
   def __eq__(self, other):
-    return np.array_equal(self.lhs, other.lhs) and np.array_equal(self.rhs, other.rhs) and self.forward == other.forward and self.backward == other.backward
+    return np.array_equal(self.lhs, other.lhs) and \
+        np.array_equal(self.rhs, other.rhs) and \
+        self.forward == other.forward and \
+        self.backward == other.backward
 
   def __repr__(self):
-    return '+'.join([f'[{chem.formula}]' for chem in self.lhs]) + '↔' + '+'.join([f'[{chem.formula}]' for chem in self.rhs])
+    return '+'.join([f'[{chem.formula}]' for chem in self.lhs]) + \
+        '↔' + '+'.join([f'[{chem.formula}]' for chem in self.rhs])
 
   def __str__(self):
-    return '+'.join([f'[{chem.formula}]' for chem in self.lhs]) + '↔' + '+'.join([f'[{chem.formula}]' for chem in self.rhs])
+    return '+'.join([f'[{chem.formula}]' for chem in self.lhs]) + \
+        '↔' + '+'.join([f'[{chem.formula}]' for chem in self.rhs])
 
   def prep_update(self):
     lhs_product = reduce(
@@ -110,9 +125,11 @@ class Reaction:
         lambda x, y: x*y, [chemical.conc for chemical in self.rhs])
 
     for chemical in self.lhs:
-      chemical.dconc += rhs_product*self.backward - lhs_product*self.forward
+      chemical.dconc += rhs_product*self.backward - \
+          lhs_product*self.forward
     for chemical in self.rhs:
-      chemical.dconc += lhs_product*self.forward - rhs_product*self.backward
+      chemical.dconc += lhs_product*self.forward - \
+          rhs_product*self.backward
 
   def mutate(self):
     self.fav_rate = add_noise(self.fav_rate, Reaction.FAV_RATE_MAX)
@@ -128,10 +145,8 @@ class Reaction:
 
 
 class Network:
-
   N_INIT_CHEMICALS = 6
   N_INIT_REACTIONS = 6
-
   OUTPUT_LEFT = 0
   OUTPUT_RIGHT = 1
   FOOD_LEFT = 2
@@ -158,13 +173,16 @@ class Network:
     NETWORK_RNG.shuffle(self.chemicals)
 
   def __eq__(self, other):
-    return np.array_equal(self.chemicals, other.chemicals) and np.array_equal(self.reactions, other.reactions)
+    return np.array_equal(self.chemicals, other.chemicals) and \
+        np.array_equal(self.reactions, other.reactions)
 
   def __repr__(self):
-    return ' '.join([repr(chemical) for chemical in self.chemicals]) + '\n' + '\n'.join([repr(reaction) for reaction in self.reactions])
+    return ' '.join([repr(chemical) for chemical in self.chemicals]) + \
+        '\n' + '\n'.join([repr(reaction) for reaction in self.reactions])
 
   def __str__(self):
-    return ' '.join([repr(chemical) for chemical in self.chemicals]) + '\n' + '\n'.join([repr(reaction) for reaction in self.reactions])
+    return ' '.join([repr(chemical) for chemical in self.chemicals]) + \
+        '\n' + '\n'.join([repr(reaction) for reaction in self.reactions])
 
   def deep_copy(self):
     deep_copy = copy.deepcopy(self)
@@ -175,13 +193,14 @@ class Network:
     return deep_copy
 
   def new_reaction(self):
-
     def decompose(formula):
       formula_len = len(formula)
       if AGGREGATION:
         formula = ''.join(NETWORK_RNG.permutation(list(formula)))
-      i = NETWORK_RNG.integers(max(formula_len-Chemical.FORMULA_LEN_MAX, 1),
-                               min(formula_len, Chemical.FORMULA_LEN_MAX+1))
+      i = NETWORK_RNG.integers(
+          max(formula_len-Chemical.FORMULA_LEN_MAX, 1),
+          min(formula_len, Chemical.FORMULA_LEN_MAX+1)
+      )
       return [formula[:i], formula[i:]]
 
     def compose(formulas):
@@ -201,7 +220,8 @@ class Network:
         rhs_formulas = decompose(rhs_formulas[0])
 
     if AGGREGATION:
-      rhs_formulas = [''.join(sorted(formula)) for formula in rhs_formulas]
+      rhs_formulas = [''.join(sorted(formula))
+                      for formula in rhs_formulas]
     rhs = []
     for formula in rhs_formulas:
       for chem in self.chemicals:
@@ -213,7 +233,8 @@ class Network:
         self.chemicals.append(new_chem)
         rhs.append(new_chem)
 
-    if not (Counter([lhs_chem.formula for lhs_chem in lhs]) == Counter([rhs_chem.formula for rhs_chem in rhs])):
+    if not (Counter([lhs_chem.formula for lhs_chem in lhs])
+            == Counter([rhs_chem.formula for rhs_chem in rhs])):
       self.reactions.append(Reaction(lhs, np.array(rhs)))
     return
 
@@ -231,10 +252,12 @@ class Network:
 
     for type in EnvObjectTypes:
       for side in Sides:
-        self.chemicals[getattr(
-            Network, f'{type.name}_{side.name}')].conc = readings[side.value][type.value] * 2
+        self.chemicals[
+            getattr(Network, f'{type.name}_{side.name}')
+        ].conc = readings[side.value][type.value] * 2
 
-    return self.chemicals[Network.OUTPUT_LEFT].conc, self.chemicals[Network.OUTPUT_RIGHT].conc
+    return self.chemicals[Network.OUTPUT_LEFT].conc, \
+        self.chemicals[Network.OUTPUT_RIGHT].conc
 
   def mutate(self):
     for chemical in self.chemicals:
@@ -250,14 +273,15 @@ class Network:
         self.reactions.pop(NETWORK_RNG.integers(len(self.reactions)))
     if NETWORK_RNG.random() < MUTATION_RATE:
       i = NETWORK_RNG.choice(range(len(self.chemicals)), 2)
-      self.chemicals[i[0]], self.chemicals[i[1]
-                                           ] = self.chemicals[i[1]], self.chemicals[i[0]]
+      self.chemicals[i[0]], self.chemicals[i[1]] = \
+          self.chemicals[i[1]], self.chemicals[i[0]]
 
   def print_derivs(self):
     derivs = {}
 
     for chemical in self.chemicals:
-      derivs[chemical.formula] = f"-{chemical.decay:.2f}[{chemical.formula}]"
+      derivs[chemical.formula] = \
+          f"-{chemical.decay:.2f}[{chemical.formula}]"
 
     for reaction in self.reactions:
       for chem in reaction.lhs:
